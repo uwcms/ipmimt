@@ -50,6 +50,24 @@ std::vector<opt::option> opt_subcmd_parse_terminator(std::vector<std::string>& a
 	return result;
 }
 
+int parse_config(std::vector<std::string> argv,
+		opt::options_description options,
+		opt::positional_options_description positional,
+		opt::variables_map option_vars)
+{
+	try {
+		opt::parsed_options option_parsed = opt::command_line_parser(argv).options(options).positional(positional).allow_unregistered().extra_style_parser(opt_subcmd_parse_terminator).run();
+		opt::store(option_parsed, option_vars);
+		opt::notify(option_vars);
+		//command_args = opt::collect_unrecognized(option_parsed.options, opt::include_positional);
+	}
+	catch (std::exception &e) {
+		printf("Error %s\n\n", e.what());
+		return -1;
+	}
+	return 0;
+}
+
 std::map<std::string, Command*> *REGISTERED_COMMANDS;
 
 int main(int argc, char *argv[]) {
@@ -74,24 +92,16 @@ int main(int argc, char *argv[]) {
 	opt::options_description option_all;
 	option_all.add(option_normal).add(option_hidden);
 
+	opt::variables_map option_vars;
+
 	opt::positional_options_description option_pos;
 	option_pos.add("command", 1);
-	option_pos.add("command-args", -1); // ignored, but necessary to allow extra positional arguments.  these are collected below in opt::collect_unrecognized().
+	option_pos.add("command-args", -1);
 
-	opt::variables_map option_vars;
-	try {
-		opt::parsed_options option_parsed = opt::command_line_parser(argc, argv).options(option_all).positional(option_pos).allow_unregistered().extra_style_parser(opt_subcmd_parse_terminator).run();
-		opt::store(option_parsed, option_vars);
-		opt::notify(option_vars);
-		//command_args = opt::collect_unrecognized(option_parsed.options, opt::include_positional);
-	}
-	catch (std::exception &e) {
-		printf("Error %s\n\n", e.what());
-		printf("Try \"%s help\"\n", argv[0]);
+	if (parse_config(std::vector<std::string>(argv+1, argv+argc), option_all, option_pos, option_vars) < 0)
 		return 1;
-	}
 
-	if (argc == 1 || option_vars.count("help") || option_vars["command"].empty() || command == "help" || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
+	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || command == "help" || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
 		printf("%s [options] command [arguments]\n", argv[0]);
 		printf("\n");
 		std::cout << option_normal << "\n";
