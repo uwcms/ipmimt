@@ -65,7 +65,7 @@ int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::strin
 	}
 
 	try {
-		uint32_t filterid = sysmgr.register_event_filter(crate, fru, card, sensor, assertmask, deassertmask, event_print);
+		sysmgr.register_event_filter(crate, fru, card, sensor, assertmask, deassertmask, event_print);
 		printf("Crate  FRU  Card              Sensor            Assertion   Offset\n");
 		sysmgr.process_events(0);
 	}

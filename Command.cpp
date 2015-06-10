@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <fstream>
 #include "Command.h"
 
 std::string stdsprintf(const char *fmt, ...) {
@@ -36,13 +37,23 @@ std::vector<opt::option> opt_subcmd_parse_terminator(std::vector<std::string>& a
 int parse_config(std::vector<std::string> argv,
 		opt::options_description options,
 		opt::positional_options_description positional,
-		opt::variables_map option_vars)
+		opt::variables_map option_vars,
+		std::vector<std::string> config_files)
 {
 	try {
 		opt::parsed_options option_parsed = opt::command_line_parser(argv).options(options).positional(positional).extra_style_parser(opt_subcmd_parse_terminator).run();
+		//command_args = opt::collect_unrecognized(option_parsed.options, opt::include_positional);
+
+		for (auto it = config_files.begin(); it != config_files.end(); it++) {
+			std::basic_ifstream<char> cfgfile(*it);
+			if (!cfgfile)
+				continue; // Silence.  We don't care if the config file is missing.
+
+			opt::store(opt::parse_config_file(cfgfile, options), option_vars);
+		}
+
 		opt::store(option_parsed, option_vars);
 		opt::notify(option_vars);
-		//command_args = opt::collect_unrecognized(option_parsed.options, opt::include_positional);
 	}
 	catch (std::exception &e) {
 		printf("Error %s\n\n", e.what());

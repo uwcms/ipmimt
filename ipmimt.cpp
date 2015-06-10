@@ -48,7 +48,13 @@ int main(int argc, char *argv[]) {
 	option_pos.add("command", 1);
 	option_pos.add("command-args", -1);
 
-	if (parse_config(std::vector<std::string>(argv+1, argv+argc), option_all, option_pos, option_vars) < 0)
+	if (!getenv("HOME")) {
+		printf("Missing HOME environment variable\n");
+		return 1;
+	}
+	std::vector<std::string> config_paths = { stdsprintf("%s/.ipmimt.conf", getenv("HOME")), "/etc/ipmimt.conf" };
+
+	if (parse_config(std::vector<std::string>(argv+1, argv+argc), option_all, option_pos, option_vars, config_paths) < 0)
 		return 1;
 
 	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
