@@ -70,7 +70,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 	try {
 		std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, control_sequence);
 		if (response[0] != 0)
-			printf("IPMI error, response code 0x%02x", response[0]);
+			printf("IPMI error, response code 0x%02x\n", response[0]);
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
