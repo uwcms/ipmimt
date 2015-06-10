@@ -11,13 +11,18 @@ ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp) $(wildcard commands/*.cpp))
 	@mkdir -p .dep/ "$(dir $@)"
 	g++ $(CCOPTS) $(DEPOPTS) -c -o $@ $<
 
-tags: *.cpp
+rpm: all
+	IPMIMT_ROOT=$(PWD) rpmbuild --sign -ba --quiet --define "_topdir $(PWD)/rpm" sysmgr.spec
+	cp -v $(PWD)/rpm/RPMS/*/*.rpm ./
+	rm -rf $(PWD)/rpm/
+
+tags: $(wildcard *.cpp) $(wildcard commands/*.cpp)
 	ctags -R . 2>/dev/null || true
 
 distclean: clean
-	rm -rf .dep tags
+	rm -rf .dep tags *.rpm
 clean:
-	rm -rf ipmimt .obj/
+	rm -rf ipmimt .obj/ rpm/
 
 .PHONY: distclean clean all
 
