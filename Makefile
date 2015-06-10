@@ -1,19 +1,24 @@
-DEPOPTS = -MMD -MF .$@.dep -MP
+DEPOPTS = -MMD -MF .dep/$(subst /,^,$(subst .obj/,,$@)) -MP
+
 CCOPTS = $(DEPOPTS) -ggdb -Wall -std=c++0x
 
 all: ipmimt tags
 
-ipmimt: ipmimt.cpp $(wildcard commands/*)
-	g++ $(CCOPTS) -o $@ ipmimt.cpp Command.cpp $(wildcard commands/*.cpp) -lsysmgr -lboost_program_options
+ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp) $(wildcard commands/*.cpp))
+	g++ $(CCOPTS) -o $@ $^ -lsysmgr -lboost_program_options
+
+.obj/%.o: %.cpp
+	@mkdir -p .dep/ "$(dir $@)"
+	g++ $(CCOPTS) $(DEPOPTS) -c -o $@ $<
 
 tags: *.cpp
 	ctags -R . 2>/dev/null || true
 
 distclean: clean
-	rm -f .*.dep tags
+	rm -rf .dep tags
 clean:
-	rm -f ipmimt
+	rm -rf ipmimt .obj/
 
 .PHONY: distclean clean all
 
--include $(wildcard .*.dep)
+-include $(wildcard .dep/*)
