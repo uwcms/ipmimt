@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 	std::string sysmgr_host;
 	std::string sysmgr_pass;
 	uint16_t sysmgr_port;
+	bool print_version;
 	std::string command;
 	std::vector<std::string> command_args;
 	
@@ -36,6 +37,7 @@ int main(int argc, char *argv[]) {
 	opt::options_description option_hidden("Hidden options");
 	option_hidden.add_options()
 		("help,h", "help")
+		("version", opt::bool_switch(&print_version)->default_value(false), "version")
 		("command", opt::value<std::string>(&command), "")
 		("command-args", opt::value< std::vector<std::string> >(&command_args));
 
@@ -56,6 +58,14 @@ int main(int argc, char *argv[]) {
 
 	if (parse_config(std::vector<std::string>(argv+1, argv+argc), option_all, option_pos, option_vars, config_paths) < 0)
 		return 1;
+
+	if (print_version) {
+		printf("\nCompiled from %s@%s\n", GIT_BRANCH, GIT_COMMIT);
+		if (strlen(GIT_DIRTY) > 1)
+			printf("%s", GIT_DIRTY);
+		printf("\n");
+		return 0;
+	}
 
 	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
 		printf("%s [options] command [arguments]\n", argv[0]);
