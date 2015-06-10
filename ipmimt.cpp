@@ -28,13 +28,14 @@ int main(int argc, char *argv[]) {
 	
 	opt::options_description option_normal("Global options");
 	option_normal.add_options()
-		("help", "Global option help")
+		("help", "help")
 		("host,H", opt::value<std::string>(&sysmgr_host)->default_value("localhost"), "system manager hostname")
 		("pass,P", opt::value<std::string>(&sysmgr_pass)->default_value(""), "system manager password")
 		("port", opt::value<uint16_t>(&sysmgr_port)->default_value(4681), "system manager port");
 
 	opt::options_description option_hidden("Hidden options");
 	option_hidden.add_options()
+		("help,h", "help")
 		("command", opt::value<std::string>(&command), "")
 		("command-args", opt::value< std::vector<std::string> >(&command_args));
 
@@ -50,18 +51,17 @@ int main(int argc, char *argv[]) {
 	if (parse_config(std::vector<std::string>(argv+1, argv+argc), option_all, option_pos, option_vars) < 0)
 		return 1;
 
-	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || command == "help" || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
+	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
 		printf("%s [options] command [arguments]\n", argv[0]);
 		printf("\n");
 		std::cout << option_normal << "\n";
 		printf("Valid commands:\n");
-		unsigned int command_maxlen = 4; // 4="help"
+		unsigned int command_maxlen = 1;
 		for (std::map<std::string, Command*>::iterator it = REGISTERED_COMMANDS->begin(); it != REGISTERED_COMMANDS->end(); it++) {
 			if (it->first.size() > command_maxlen)
 				command_maxlen = it->first.size();
 		}
 		std::string format = stdsprintf("  %%%ds    %%s\n", command_maxlen);
-		printf(format.c_str(), "help", "provides this help information");
 		for (std::map<std::string, Command*>::iterator it = REGISTERED_COMMANDS->begin(); it != REGISTERED_COMMANDS->end(); it++) {
 			printf(format.c_str(), it->second->name.c_str(), it->second->short_description.c_str());
 		}
