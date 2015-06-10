@@ -36,7 +36,7 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 		return 1;
 
 	std::vector<uint8_t> raw_data;
-	int bad_raw = 0;
+	bool bad_raw = false;
 	for (auto it = raw_input.begin(); it != raw_input.end(); it++) {
 		try {
 			uint32_t raw_value = parse_uint32(*it);
@@ -47,7 +47,7 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 		}
 		catch (std::range_error &e) {
 			printf("%s\n", e.what());
-			bad_raw = 1;
+			bad_raw = true;
 			break;
 		}
 	}

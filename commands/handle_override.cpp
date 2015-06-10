@@ -37,7 +37,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
 		return 1;
 
-	int bad_config = 0;
+	bool bad_config = false;
 
 	std::vector<uint8_t> control_sequence;
 
@@ -53,7 +53,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 	}
 	else {
 		printf("Unknown action \"%s\"\n", action.c_str());
-		bad_config = 1;
+		bad_config = true;
 	}
 
 	if (option_vars.count("help")

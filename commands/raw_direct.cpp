@@ -37,7 +37,7 @@ int Command_raw_direct::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
 		return 1;
 
-	int bad_data = 0;
+	bool bad_data = false;
 	std::vector<uint8_t> raw_data;
 	uint32_t final_addr;
 	try {
@@ -55,7 +55,7 @@ int Command_raw_direct::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 	}
 	catch (std::range_error &e) {
 		printf("%s\n", e.what());
-		bad_data = 1;
+		bad_data = true;
 	}
 
 	if (option_vars.count("help") || !raw_data.size()
