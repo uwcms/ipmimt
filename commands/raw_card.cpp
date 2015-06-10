@@ -52,12 +52,6 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 		}
 	}
 
-	if (option_vars.count("help")) printf("0\n");
-	if (!raw_data.size()) printf("A\n");
-	if (fru <= 0) printf("B\n");
-	if (fru > 255) printf("C\n");
-	if (crate <= 0) printf("D\n");
-	if (bad_raw) printf("E\n");
 	if (option_vars.count("help") || !raw_data.size() || fru <= 0 || fru > 255 || crate <= 0 || bad_raw) {
 		printf("ipmimt raw_card [arguments] raw_bytes ...\n");
 		printf("\n");
