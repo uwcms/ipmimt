@@ -4,7 +4,7 @@ CCOPTS = $(DEPOPTS) -ggdb -Wall -std=c++0x
 all: ipmimt tags
 
 ipmimt: ipmimt.cpp $(wildcard commands/*)
-	g++ $(CCOPTS) -o $@ ipmimt.cpp $(wildcard commands/*.cpp) -lsysmgr -lboost_program_options
+	g++ $(CCOPTS) -o $@ ipmimt.cpp Command.cpp $(wildcard commands/*.cpp) -lsysmgr -lboost_program_options
 
 tags: *.cpp
 	ctags -R . 2>/dev/null || true

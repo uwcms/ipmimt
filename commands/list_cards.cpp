@@ -12,7 +12,7 @@ int Command_list_cards::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 {
 	int crate = 0;
 
-	opt::options_description option_normal("Global options");
+	opt::options_description option_normal("subcommand options");
 	option_normal.add_options()
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "crate");

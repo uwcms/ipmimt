@@ -3,6 +3,7 @@
 
 #include <sysmgr.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string>
 #include <map>
 #include <vector>
@@ -41,5 +42,8 @@ int parse_config(std::vector<std::string> argv,
 		opt::options_description options,
 		opt::positional_options_description positional = opt::positional_options_description(),
 		opt::variables_map option_vars = opt::variables_map());
+
+std::string stdsprintf(const char *fmt, ...);
+uint32_t parse_uint32(const std::string token);
 
 #endif

@@ -1,5 +1,4 @@
 #include <limits.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -17,56 +16,6 @@ namespace opt = boost::program_options;
 #include <sysmgr.h>
 
 #include "Command.h"
-
-static inline std::string stdsprintf(const char *fmt, ...) {
-	va_list va;
-	va_list va2;
-	va_start(va, fmt);
-	va_copy(va2, va);
-	size_t s = vsnprintf(NULL, 0, fmt, va);
-	char str[s];
-	vsnprintf(str, s+1, fmt, va2);
-	va_end(va);
-	va_end(va2);
-	return std::string(str);
-}
-
-std::vector<opt::option> opt_subcmd_parse_terminator(std::vector<std::string>& args)
-{   
-	std::vector<opt::option> result;
-	const std::string& tok = args[0];
-	if (tok.size() && tok[0] != '-')
-	{   
-		for(unsigned i = 0; i < args.size(); ++i)
-		{   
-			opt::option option;
-			option.value.push_back(args[i]);
-			option.original_tokens.push_back(args[i]);
-			option.position_key = INT_MAX;
-			result.push_back(option);
-		}
-		args.clear();
-	}
-	return result;
-}
-
-int parse_config(std::vector<std::string> argv,
-		opt::options_description options,
-		opt::positional_options_description positional,
-		opt::variables_map option_vars)
-{
-	try {
-		opt::parsed_options option_parsed = opt::command_line_parser(argv).options(options).positional(positional).allow_unregistered().extra_style_parser(opt_subcmd_parse_terminator).run();
-		opt::store(option_parsed, option_vars);
-		opt::notify(option_vars);
-		//command_args = opt::collect_unrecognized(option_parsed.options, opt::include_positional);
-	}
-	catch (std::exception &e) {
-		printf("Error %s\n\n", e.what());
-		return -1;
-	}
-	return 0;
-}
 
 std::map<std::string, Command*> *REGISTERED_COMMANDS;
 
