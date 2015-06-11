@@ -31,6 +31,6 @@ distclean: clean
 clean:
 	rm -rf ipmimt .obj/ rpm/
 
-.PHONY: distclean clean all
+.PHONY: distclean clean all rpm
 
 -include $(wildcard .dep/*)
