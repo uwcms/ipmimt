@@ -41,14 +41,14 @@ static std::string format_ts(uint32_t ts, bool raw = false) {
 int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0;
-	int fru = 0;
+	std::string frustr;
 	bool raw = false;
 
 	opt::options_description option_normal("subcommand options");
 	option_normal.add_options()
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "target crate")
-		("fru,f", opt::value<int>(&fru), "target fru")
+		("fru,f", opt::value<std::string>(&frustr), "target fru")
 		("raw,r", opt::bool_switch(&raw)->default_value(false), "output timestamps in seconds rather than human-readable time");
 
 	opt::variables_map option_vars;
@@ -59,6 +59,16 @@ int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> arg
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 		return EXIT_PARAM_ERROR;
+
+	int fru = 0;
+	try {
+		if (frustr.size())
+			fru = parse_fru_string(frustr);
+	}
+	catch (std::range_error &e) {
+		printf("Invalid FRU name \"%s\"", frustr.c_str());
+		return EXIT_PARAM_ERROR;
+	}
 
 	if (option_vars.count("help")
 			|| fru <= 0 || fru > 255

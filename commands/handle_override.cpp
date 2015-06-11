@@ -11,7 +11,7 @@ REGISTER_COMMAND(Command_handle_override);
 int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0;
-	int fru = 0;
+	std::string frustr;
 	int cycle_length = 0;
 	std::string action;
 
@@ -19,7 +19,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 	option_normal.add_options()
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "target crate")
-		("fru,f", opt::value<int>(&fru), "target fru")
+		("fru,f", opt::value<std::string>(&frustr), "target fru")
 		("cycle-length", opt::value<int>(&cycle_length)->default_value(24), "how long to hold the handle out for when cycling.  (<22 seconds may be unsafe)");
 
 	opt::options_description option_hidden("hidden options");
@@ -36,6 +36,16 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
 		return EXIT_PARAM_ERROR;
+
+	int fru = 0;
+	try {
+		if (frustr.size())
+			fru = parse_fru_string(frustr);
+	}
+	catch (std::range_error &e) {
+		printf("Invalid FRU name \"%s\"", frustr.c_str());
+		return EXIT_PARAM_ERROR;
+	}
 
 	bool bad_config = false;
 

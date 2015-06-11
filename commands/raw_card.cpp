@@ -11,14 +11,14 @@ REGISTER_COMMAND(Command_raw_card);
 int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0;
-	int fru = 0;
+	std::string frustr;
 	std::vector<std::string> raw_input;
 
 	opt::options_description option_normal("subcommand options");
 	option_normal.add_options()
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "target crate")
-		("fru,f", opt::value<int>(&fru), "target fru");
+		("fru,f", opt::value<std::string>(&frustr), "target fru");
 
 	opt::options_description option_hidden("hidden options");
 	option_hidden.add_options()
@@ -34,6 +34,16 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
 		return EXIT_PARAM_ERROR;
+
+	int fru = 0;
+	try {
+		if (frustr.size())
+			fru = parse_fru_string(frustr);
+	}
+	catch (std::range_error &e) {
+		printf("Invalid FRU name \"%s\"", frustr.c_str());
+		return EXIT_PARAM_ERROR;
+	}
 
 	std::vector<uint8_t> raw_data;
 	bool bad_raw = false;

@@ -44,14 +44,14 @@ int Command_list_cards::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 			printf("%s\t%s\t%s\n", "FRU", "State", "Name");
 			std::vector<sysmgr::card_info> sm_cards = sysmgr.list_cards(crate);
 			for (auto it = sm_cards.begin(); it != sm_cards.end(); it++)
-				printf("%hhu\tM%hhu\t%s\n", it->fru, it->mstate, it->name.c_str());
+				printf("%s\tM%hhu\t%s\n", sysmgr::sysmgr::get_slotstring(it->fru).c_str(), it->mstate, it->name.c_str());
 		}
 		else {
 			printf("%s\t%s\t%s\t%s\n", "Crate", "FRU", "State", "Name");
 			for (int i = 1; i <= ncrates; i++) {
 				std::vector<sysmgr::card_info> sm_cards = sysmgr.list_cards(i);
 				for (auto it = sm_cards.begin(); it != sm_cards.end(); it++)
-					printf("%hhu\t%hhu\tM%hhu\t%s\n", i, it->fru, it->mstate, it->name.c_str());
+					printf("%hhu\t%s\tM%hhu\t%s\n", i, sysmgr::sysmgr::get_slotstring(it->fru).c_str(), it->mstate, it->name.c_str());
 			}
 		}
 	}

@@ -62,7 +62,7 @@ int parse_config(std::vector<std::string> argv,
 	return 0;
 }
 
-uint32_t parse_uint32(const std::string token)
+uint32_t parse_uint32(const std::string &token)
 {
 	const char *str = token.c_str();
 	char *end;
@@ -74,7 +74,41 @@ uint32_t parse_uint32(const std::string token)
 	return val;
 }
 
-uint8_t ipmi_checksum(std::vector<uint8_t> data)
+uint8_t parse_fru_string(const std::string &frustr)
+{
+	try {
+		return parse_uint32(frustr);
+	}
+	catch (std::range_error &e) {
+		// Ignore, it's just not a numeric FRU number.
+	}
+
+	size_t numpos = frustr.find_first_of("0123456789");
+	if (numpos == std::string::npos)
+		throw std::range_error(stdsprintf("unparsable FRU name \"%s\"", frustr.c_str()));
+
+	std::string prefix = frustr.substr(0, numpos);
+	uint32_t num = parse_uint32(frustr.substr(numpos));
+
+	if (prefix == "MCH")
+		return num+2;
+	else if (prefix == "AMC" && num == 13)
+		return 30;
+	else if (prefix == "AMC" && num == 14)
+		return 29;
+	else if (prefix == "AMC")
+		return num+4;
+	else if (prefix == "CU")
+		return num+40;
+	else if (prefix == "PM")
+		return num+50;
+	else if (prefix == "FRU")
+		return num;
+	else
+		throw std::range_error(stdsprintf("unknown FRU type \"%s\"", frustr.c_str()));
+}
+
+uint8_t ipmi_checksum(const std::vector<uint8_t> &data)
 {
 	int8_t checksum = 0;
 

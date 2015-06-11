@@ -21,7 +21,7 @@ static void event_print(const sysmgr::event& e) {
 int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0xff;
-	int fru = 0xff;
+	std::string frustr;
 	std::string card;
 	std::string sensor;
 	std::string assertmask_str;
@@ -31,7 +31,7 @@ int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::strin
 	option_normal.add_options()
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "target crate")
-		("fru,f", opt::value<int>(&fru), "target fru")
+		("fru,f", opt::value<std::string>(&frustr), "target fru")
 		("card,n", opt::value<std::string>(&card), "card name")
 		("sensor,s", opt::value<std::string>(&sensor), "sensor name")
 		("assertmask,a", opt::value<std::string>(&assertmask_str)->default_value("0x7fff"), "assertion mask")
@@ -43,6 +43,16 @@ int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::strin
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 		return EXIT_PARAM_ERROR;
+
+	int fru = 0xff;
+	try {
+		if (frustr.size())
+			fru = parse_fru_string(frustr);
+	}
+	catch (std::range_error &e) {
+		printf("Invalid FRU name \"%s\"", frustr.c_str());
+		return EXIT_PARAM_ERROR;
+	}
 
 	bool bad_config = false;
 	uint32_t assertmask, deassertmask;

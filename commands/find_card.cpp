@@ -149,7 +149,7 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0;
-	int fru = 0;
+	std::string frustr;
 	std::string hostname;
 	bool verbose = false;
 	bool program = false;
@@ -159,7 +159,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 	option_normal.add_options()
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "crate to identify or program")
-		("fru,f", opt::value<int>(&fru), "fru to identify or program")
+		("fru,f", opt::value<std::string>(&frustr), "fru to identify or program")
 		("hostname,h", opt::value<std::string>(&hostname), "hostname to search for")
 		("verbose,v", opt::bool_switch(&verbose), "report all errors detected while searching crates")
 		("program", opt::bool_switch(&program), "program a card's identity rather than searching or identifying")
@@ -172,6 +172,16 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 		return EXIT_PARAM_ERROR;
+
+	int fru = 0;
+	try {
+		if (frustr.size())
+			fru = parse_fru_string(frustr);
+	}
+	catch (std::range_error &e) {
+		printf("Invalid FRU name \"%s\"", frustr.c_str());
+		return EXIT_PARAM_ERROR;
+	}
 
 	bool valid_mode = false;
 	valid_mode |= program && (crate && fru && hostname.size());
@@ -227,15 +237,15 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 						int hw_area_offset = get_hw_info_area_offset(sysmgr, crateit->crateno, cardit->fru);
 						uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru, hw_area_offset);
 						if (card_serial == serial_of_hostname) {
-							printf("Crate %hhu, %s (FRU %hhu)\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->fru);
+							printf("Crate %hhu, %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str());
 							return EXIT_OK;
 						}
 						else if (!card_serial && verbose)
-							printf("Found unidentified card of correct type at Crate %hhu, %s (FRU %hhu)\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->fru);
+							printf("Found unidentified card of correct type at Crate %hhu, %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str());
 					}
 					catch (std::range_error &e) {
 						if (verbose)
-							printf("Error scanning Crate %hhu, FRU %hhu: \"%s\".  Skipping.\n", crateit->crateno, cardit->fru, e.what());
+							printf("Error scanning Crate %hhu, %s: \"%s\".  Skipping.\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), e.what());
 					}
 				}
 			}
