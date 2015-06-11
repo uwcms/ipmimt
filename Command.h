@@ -9,6 +9,12 @@
 #include <vector>
 #include <boost/program_options.hpp>
 
+#define EXIT_OK              0
+#define EXIT_UNSUCCESSFUL    1
+#define EXIT_PARAM_ERROR     2
+#define EXIT_REMOTE_ERROR    3
+#define EXIT_INTERNAL_ERROR  4
+
 class Command;
 
 extern std::map<std::string, Command*> *REGISTERED_COMMANDS;

@@ -23,13 +23,13 @@ int Command_list_cards::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 	option_pos.add("crate", 1);
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	if (option_vars.count("help")) {
 		printf("ipmimt list_cards [arguments] [crate]\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
@@ -37,7 +37,7 @@ int Command_list_cards::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 
 		if (crate > ncrates) {
 			printf("No such crate\n");
-			return 1;
+			return EXIT_PARAM_ERROR;
 		}
 
 		if (crate) {
@@ -57,7 +57,7 @@ int Command_list_cards::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

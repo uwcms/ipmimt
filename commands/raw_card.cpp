@@ -33,7 +33,7 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 	option_pos.add("raw-command", -1);
 
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	std::vector<uint8_t> raw_data;
 	bool bad_raw = false;
@@ -56,7 +56,7 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 		printf("ipmimt raw_card [arguments] raw_bytes ...\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
@@ -66,7 +66,7 @@ int Command_raw_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> a
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

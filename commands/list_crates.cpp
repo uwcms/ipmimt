@@ -17,7 +17,7 @@ int Command_list_crates::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

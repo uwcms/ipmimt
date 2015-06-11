@@ -33,7 +33,7 @@ int Command_read_sensor::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 	option_pos.add("sensor", 1);
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	if (option_vars.count("help")
 			|| crate <= 0
@@ -42,7 +42,7 @@ int Command_read_sensor::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 		printf("ipmimt read_sensor [arguments] [crate fru sensor_name]\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
@@ -58,7 +58,7 @@ int Command_read_sensor::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 		}
 		if (!sensor_found) {
 			printf("Sensor not found\n");
-			return 1;
+			return EXIT_UNSUCCESSFUL;
 		}
 
 		sysmgr::sensor_reading reading = sysmgr.sensor_read(crate, fru, sensor);
@@ -88,7 +88,7 @@ int Command_read_sensor::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

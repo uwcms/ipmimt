@@ -52,19 +52,19 @@ int main(int argc, char *argv[]) {
 
 	if (!getenv("HOME")) {
 		printf("Missing HOME environment variable\n");
-		return 1;
+		return EXIT_INTERNAL_ERROR;
 	}
 	std::vector<std::string> config_paths = { stdsprintf("%s/.ipmimt.conf", getenv("HOME")), "/etc/ipmimt.conf" };
 
 	if (parse_config(std::vector<std::string>(argv+1, argv+argc), option_all, option_pos, option_vars, config_paths) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	if (print_version) {
 		printf("\nCompiled from %s@%s\n", GIT_BRANCH, GIT_COMMIT);
 		if (strlen(GIT_DIRTY) > 1)
 			printf("%s", GIT_DIRTY);
 		printf("\n");
-		return 0;
+		return EXIT_OK;
 	}
 
 	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 		for (std::map<std::string, Command*>::iterator it = REGISTERED_COMMANDS->begin(); it != REGISTERED_COMMANDS->end(); it++) {
 			printf(format.c_str(), it->second->name.c_str(), it->second->short_description.c_str());
 		}
-		return 0;
+		return EXIT_OK;
 	}
 
 	sysmgr::sysmgr sm(sysmgr_host, sysmgr_pass, sysmgr_port);
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("Unable to connect to system manager: %s\n", e.message.c_str());
-		return 2;
+		return EXIT_REMOTE_ERROR;
 	}
 
 	// command is in the map, this was validated at the 'do you need help?' stage.

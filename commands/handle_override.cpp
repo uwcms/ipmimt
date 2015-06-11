@@ -35,7 +35,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 	option_pos.add("action", 1);
 
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	bool bad_config = false;
 
@@ -64,7 +64,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 		printf("ipmimt handle_override [arguments] (release|in|out|cycle)\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
@@ -74,7 +74,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

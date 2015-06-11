@@ -24,7 +24,7 @@ int Command_cold_reset::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 	opt::positional_options_description option_pos;
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	if (option_vars.count("help")
 			|| fru < 0 || fru > 255
@@ -32,7 +32,7 @@ int Command_cold_reset::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 			printf("ipmimt cold_reset [arguments]\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	std::vector<uint8_t> control_sequence = { 0x2c, 0x04, 0x00, 0, 0x00 };
@@ -45,7 +45,7 @@ int Command_cold_reset::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string>
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

@@ -39,7 +39,7 @@ int Command_raw_forwarded::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 	option_pos.add("raw-command", -1);
 
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	bool bad_data = false;
 	std::vector<uint8_t> raw_data;
@@ -75,7 +75,7 @@ int Command_raw_forwarded::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 		printf("ipmimt raw_forwarded [arguments] raw_bytes ...\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
@@ -85,7 +85,7 @@ int Command_raw_forwarded::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

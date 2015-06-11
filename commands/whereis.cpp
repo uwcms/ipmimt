@@ -171,7 +171,7 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 	option_pos.add("hostname", 1);
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	bool valid_mode = false;
 	valid_mode |= program && (crate && fru && hostname.size());
@@ -192,7 +192,7 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 		printf("With --program:    Write the card's identity to EEPROM\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	uint32_t serial_of_hostname = 0;
@@ -203,7 +203,7 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 		}
 		catch (std::range_error &e) {
 			printf("Unable to parse hostname: %s\n", e.what());
-			return 1;
+			return EXIT_PARAM_ERROR;
 		}
 	}
 
@@ -228,7 +228,7 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 						uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru, hw_area_offset);
 						if (card_serial == serial_of_hostname) {
 							printf("Crate %hhu, Slot %s (FRU %hhu)\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->fru);
-							return 0;
+							return EXIT_OK;
 						}
 					}
 					catch (std::range_error &e) {
@@ -238,7 +238,7 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 				}
 			}
 			printf("Card not found in any online crate.\n");
-			return 2;
+			return EXIT_UNSUCCESSFUL;
 		}
 		else {
 			int hw_area_offset = get_hw_info_area_offset(sysmgr, crate, fru);
@@ -254,17 +254,17 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 			}
 			catch (std::runtime_error &e) {
 				printf("Error determining card hostname for \"%s\", rev %hhu, serial %u: %s\n", card_type.c_str(), card_serial >> 24, card_serial & 0x00ffffff, e.what());
-				return 2;
+				return EXIT_UNSUCCESSFUL;
 			}
 		}
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
 	catch (std::runtime_error &e) {
 		printf("error: %s\n", e.what());
-		return 1;
+		return EXIT_INTERNAL_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

@@ -42,7 +42,7 @@ int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::strin
 	opt::positional_options_description option_pos;
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	bool bad_config = false;
 	uint32_t assertmask, deassertmask;
@@ -61,7 +61,7 @@ int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::strin
 		printf("ipmimt watch_events [arguments]\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
@@ -71,7 +71,7 @@ int Command_watch_events::execute(sysmgr::sysmgr &sysmgr, std::vector<std::strin
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

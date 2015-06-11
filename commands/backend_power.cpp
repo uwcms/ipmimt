@@ -37,7 +37,7 @@ int Command_backend_power::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 	option_pos.add("setting", 1);
 
 	if (parse_config(args, option_all, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	if (option_vars.count("help")
 			|| fru <= 0 || fru > 255
@@ -46,7 +46,7 @@ int Command_backend_power::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 		printf("ipmimt backend_power [arguments] (enable|disable|status)\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 
@@ -55,7 +55,7 @@ int Command_backend_power::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 			std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x02 }));
 			if (response[0] != 0) {
 				printf("IPMI error, response code 0x%02x\n", response[0]);
-				return 1;
+				return EXIT_REMOTE_ERROR;
 			}
 			printf("Nonvolatile Setting: %s\n", response[3] ? "enabled" : "disabled");
 			printf("Operational Setting: %s\n", response[1] ? "enabled" : "disabled");
@@ -77,7 +77,7 @@ int Command_backend_power::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }

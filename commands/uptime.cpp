@@ -58,7 +58,7 @@ int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> arg
 	option_pos.add("fru", 1);
 
 	if (parse_config(args, option_normal, option_pos, option_vars) < 0)
-		return 1;
+		return EXIT_PARAM_ERROR;
 
 	if (option_vars.count("help")
 			|| fru <= 0 || fru > 255
@@ -66,14 +66,14 @@ int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> arg
 		printf("ipmimt uptime [arguments] [crate fru]\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
-		return 0;
+		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 	}
 
 	try {
 		std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x28 }));
 		if (response[0] != 0) {
 			printf("IPMI error, response code 0x%02x\n", response[0]);
-			return 2;
+			return EXIT_REMOTE_ERROR;
 		}
 
 		if ((response.size() % 4) != 1) {
@@ -81,7 +81,7 @@ int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> arg
 			for (auto it = response.begin(); it != response.end(); it++)
 				printf(" %02hhx", *it);
 			printf("\n");
-			return 2;
+			return EXIT_REMOTE_ERROR;
 		}
 
 		if (response.size() >= 5)
@@ -95,7 +95,7 @@ int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> arg
 	}
 	catch (sysmgr::sysmgr_exception &e) {
 		printf("sysmgr error: %s\n", e.message.c_str());
-		return 1;
+		return EXIT_REMOTE_ERROR;
 	}
-	return 0;
+	return EXIT_OK;
 }
