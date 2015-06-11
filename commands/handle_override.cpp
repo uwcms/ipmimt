@@ -20,7 +20,7 @@ int Command_handle_override::execute(sysmgr::sysmgr &sysmgr, std::vector<std::st
 		("help", "command help")
 		("crate,c", opt::value<int>(&crate), "target crate")
 		("fru,f", opt::value<int>(&fru), "target fru")
-		("cycle-length", opt::value<int>(&cycle_length)->default_value(22), "how long to hold the handle out for when cycling.  (<22 seconds may be unsafe)");
+		("cycle-length", opt::value<int>(&cycle_length)->default_value(24), "how long to hold the handle out for when cycling.  (<22 seconds may be unsafe)");
 
 	opt::options_description option_hidden("hidden options");
 	option_hidden.add_options()
