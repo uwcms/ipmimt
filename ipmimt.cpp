@@ -17,6 +17,10 @@ namespace opt = boost::program_options;
 
 #include "Command.h"
 
+extern const char *GIT_BRANCH;
+extern const char *GIT_COMMIT;
+extern const char *GIT_DIRTY;
+
 std::map<std::string, Command*> *REGISTERED_COMMANDS;
 
 int main(int argc, char *argv[]) {

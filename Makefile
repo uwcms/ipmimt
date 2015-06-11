@@ -7,12 +7,10 @@ all: ipmimt tags
 ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp))
 	g++ $(CCOPTS) -o $@ $^ -lsysmgr -lboost_program_options
 
-.obj/ipmimt.o: ipmimt.cpp
+.PHONY: .obj/versioninfo.o
+.obj/versioninfo.o: versioninfo.cpp
 	@mkdir -p .dep/ "$(dir $@)"
-	g++ $(CCOPTS) $(DEPOPTS) -c -o $@ $< \
-		-DGIT_BRANCH=\""$$(git rev-parse --abbrev-ref HEAD)"\" \
-		-DGIT_COMMIT=\""$$(git rev-parse HEAD)"\" \
-		-DGIT_DIRTY=\""$$(git status --porcelain -z | sed -re 's/\x0/\\n/g')"\"
+	g++ $(CCOPTS) $(DEPOPTS) -c -o $@ $< -DGIT_BRANCH_DATA=\""$$(git rev-parse --abbrev-ref HEAD)"\" -DGIT_COMMIT_DATA=\""$$(git rev-parse HEAD)"\" -DGIT_DIRTY_DATA=\""$$(git status --porcelain -z | sed -re 's/\x0/\\n/g')"\"
 
 .obj/%.o: %.cpp
 	@mkdir -p .dep/ "$(dir $@)"
