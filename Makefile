@@ -4,7 +4,7 @@ CCOPTS = $(DEPOPTS) -ggdb -Wall -std=c++0x
 
 all: ipmimt tags
 
-ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp) $(wildcard commands/*.cpp))
+ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp))
 	g++ $(CCOPTS) -o $@ $^ -lsysmgr -lboost_program_options
 
 .obj/ipmimt.o: ipmimt.cpp
@@ -23,7 +23,7 @@ rpm: all
 	cp -v $(PWD)/rpm/RPMS/*/*.rpm ./
 	rm -rf $(PWD)/rpm/
 
-tags: $(wildcard *.cpp) $(wildcard commands/*.cpp)
+tags: $(wildcard *.cpp *.h commands/*.cpp commands/*.h)
 	ctags -R . 2>/dev/null || true
 
 distclean: clean

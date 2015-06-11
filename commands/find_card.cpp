@@ -1,12 +1,12 @@
 #include <iostream>
 #include "../Command.h"
 
-class Command_whereis : public Command {
+class Command_find_card : public Command {
 	public:
-		Command_whereis() : Command("whereis", "find the geographic location of a named compatible card") { this->__register(); };
+		Command_find_card() : Command("find_card", "geographically locate or identify compatible cards") { this->__register(); };
 		virtual int execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args);
 };
-REGISTER_COMMAND(Command_whereis);
+REGISTER_COMMAND(Command_find_card);
 
 static uint32_t name_to_serial(std::string name, std::string &card_type)
 {
@@ -146,7 +146,7 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 		throw std::runtime_error(stdsprintf("bad response code writing hw info area: %2hhx", response[0]));
 }
 
-int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
+int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0;
 	int fru = 0;
@@ -185,7 +185,7 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 			|| fru < 0 || fru > 255
 			|| crate < 0
 			|| !valid_mode) {
-		printf("ipmimt whereis [arguments] [hostname]\n");
+		printf("ipmimt find_card [arguments] [hostname]\n");
 		printf("\n");
 		printf("With crate & fru:  Look up the card's identity (hostname)\n");
 		printf("With hostname:     Search for a matching card\n");
