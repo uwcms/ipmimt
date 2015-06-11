@@ -62,7 +62,8 @@ int parse_config(std::vector<std::string> argv,
 	return 0;
 }
 
-uint32_t parse_uint32(const std::string token) {
+uint32_t parse_uint32(const std::string token)
+{
 	const char *str = token.c_str();
 	char *end;
 	unsigned long int val = strtoul(str, &end, 0);
@@ -73,3 +74,12 @@ uint32_t parse_uint32(const std::string token) {
 	return val;
 }
 
+uint8_t ipmi_checksum(std::vector<uint8_t> data)
+{
+	int8_t checksum = 0;
+
+	for (auto it = data.begin(); it != data.end(); it++)
+		checksum = (checksum + *it) % 256;
+
+	return (-checksum);
+}

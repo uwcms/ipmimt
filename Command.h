@@ -47,4 +47,6 @@ int parse_config(std::vector<std::string> argv,
 std::string stdsprintf(const char *fmt, ...);
 uint32_t parse_uint32(const std::string token);
 
+uint8_t ipmi_checksum(std::vector<uint8_t> data);
+
 #endif
