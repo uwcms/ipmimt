@@ -227,9 +227,11 @@ int Command_whereis::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> ar
 						int hw_area_offset = get_hw_info_area_offset(sysmgr, crateit->crateno, cardit->fru);
 						uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru, hw_area_offset);
 						if (card_serial == serial_of_hostname) {
-							printf("Crate %hhu, Slot %s (FRU %hhu)\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->fru);
+							printf("Crate %hhu, %s (FRU %hhu)\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->fru);
 							return EXIT_OK;
 						}
+						else if (!card_serial && verbose)
+							printf("Found unidentified card of correct type at Crate %hhu, %s (FRU %hhu)\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->fru);
 					}
 					catch (std::range_error &e) {
 						if (verbose)
