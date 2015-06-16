@@ -47,9 +47,10 @@ int Command_read_sensor::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 
 	if (option_vars.count("help")
 			|| crate <= 0
-			|| fru <= 0 || fru > 255
-			|| !sensor.size()) {
-		printf("ipmimt read_sensor [arguments] [crate fru sensor_name]\n");
+			|| fru <= 0 || fru > 255) {
+		printf("ipmimt read_sensor [arguments] [crate fru [sensor_name]]\n");
+		printf("\n");
+		printf("If no sensor is supplied, all sensors will be listed.\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
 		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
@@ -58,42 +59,43 @@ int Command_read_sensor::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string
 	try {
 		std::vector<sysmgr::sensor_info> card_sensors = sysmgr.list_sensors(crate, fru);
 		bool sensor_found = false;
-		sysmgr::sensor_info *sensor_info;
 		for (auto it = card_sensors.begin(); it != card_sensors.end(); it++) {
-			if (it->name == sensor) {
-				sensor_info = &*it;
-				sensor_found = true;
-				break;
+			if (sensor.size() && it->name != sensor)
+				continue;
+			sensor_found = true;
+
+			if (!sensor.size())
+				printf("%-16s ", it->name.c_str());
+
+			sysmgr::sensor_reading reading = sysmgr.sensor_read(crate, fru, it->name);
+			if (reading.threshold_set) {
+				if (!raw_values)
+					printf("%f %s", reading.threshold, it->shortunits.c_str());
+				else
+					printf("%f %s  0x%02hhx  0x%04hx", reading.threshold, it->shortunits.c_str(), reading.raw, reading.eventmask);
+
+				if (show_events) {
+					const int threshold_order[] = { 2, 1, 0, 3, 4, 5 };
+					const char *thresholds[] = { "lower non-critical", "lower critical", "lower non-recoverable", "upper noncritical", "upper critical", "upper nonrecoverable" };
+					//printf("Events:");
+					printf("\t");
+					int events = 0;
+					for (int i = 0; i < 6; i++) {
+						if (reading.eventmask & (1<<threshold_order[i]))
+							printf("%s %s", (events++ ? "," : ""), thresholds[threshold_order[i]]);
+					}
+					if (!events)
+						printf("no events");
+				}
+				printf("\n");
+			}
+			else {
+				printf("0x%hhx 0x%04hx\n", reading.raw, reading.eventmask);
 			}
 		}
 		if (!sensor_found) {
 			printf("Sensor not found\n");
 			return EXIT_UNSUCCESSFUL;
-		}
-
-		sysmgr::sensor_reading reading = sysmgr.sensor_read(crate, fru, sensor);
-		if (reading.threshold_set) {
-			if (!raw_values)
-				printf("%f %s\n", reading.threshold, sensor_info->shortunits.c_str());
-			else
-				printf("%f %s  0x%02hhx  0x%04hx\n", reading.threshold, sensor_info->shortunits.c_str(), reading.raw, reading.eventmask);
-
-			if (show_events) {
-				const int threshold_order[] = { 2, 1, 0, 3, 4, 5 };
-				const char *thresholds[] = { "lower non-critical", "lower critical", "lower non-recoverable", "upper noncritical", "upper critical", "upper nonrecoverable" };
-				printf("Events:");
-				int events = 0;
-				for (int i = 0; i < 6; i++) {
-					if (reading.eventmask & (1<<threshold_order[i]))
-						printf("%s %s", (events++ ? "," : ""), thresholds[threshold_order[i]]);
-				}
-				if (!events)
-					printf(" none");
-				printf("\n");
-			}
-		}
-		else {
-			printf("0x%hhx 0x%04hx\n", reading.raw, reading.eventmask);
 		}
 	}
 	catch (sysmgr::sysmgr_exception &e) {
