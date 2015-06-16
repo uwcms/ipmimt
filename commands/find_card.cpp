@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include "../Command.h"
 
 class Command_find_card : public Command {
@@ -7,6 +8,10 @@ class Command_find_card : public Command {
 		virtual int execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args);
 };
 REGISTER_COMMAND(Command_find_card);
+
+const std::set<std::string> supported_card_types = {
+	"WISC CTP-7"
+};
 
 static uint32_t name_to_serial(std::string name, std::string &card_type)
 {
@@ -146,11 +151,19 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 		throw std::runtime_error(stdsprintf("bad response code writing hw info area: %2hhxh", response[0]));
 }
 
+class find_card_mode {
+	public:
+		bool program, crate, fru, hostname, list;
+		find_card_mode(bool program, bool crate, bool fru, bool hostname, bool list)
+			: program(program), crate(crate), fru(fru), hostname(hostname), list(list) { };
+};
+
 int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)
 {
 	int crate = 0;
 	std::string frustr;
 	std::string hostname;
+	bool list = false;
 	bool verbose = false;
 	bool program = false;
 	bool force = false;
@@ -161,6 +174,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 		("crate,c", opt::value<int>(&crate), "crate to identify or program")
 		("fru,f", opt::value<std::string>(&frustr), "fru to identify or program")
 		("hostname,h", opt::value<std::string>(&hostname), "hostname to search for")
+		("list,l", opt::bool_switch(&list), "list all cards [on specified crate]")
 		("verbose,v", opt::bool_switch(&verbose), "report all errors detected while searching crates")
 		("program", opt::bool_switch(&program), "program a card's identity rather than searching or identifying")
 		("force", opt::bool_switch(&force), "force programming even if the hardware info area is corrupt\nwarning: this will certify corrupted data");
@@ -183,12 +197,26 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 		return EXIT_PARAM_ERROR;
 	}
 
+	std::vector<find_card_mode> valid_mode_list = {
+		//             program, crate, fru,   hostname, list
+		find_card_mode(true,    true,  true,  true,     false), // Program Mode
+		find_card_mode(false,   true,  true,  false,    false), // Identify specific FRU
+		find_card_mode(false,   false, false, true,     false), // Locate hostname
+		find_card_mode(false,   false, false, false,    true ), // List all FRUs
+		find_card_mode(false,   true,  false, false,    true )  // List single crate FRUs
+	};
 	bool valid_mode = false;
-	valid_mode |= program && (crate && fru && hostname.size());
-	valid_mode |= !program && ( (crate && fru) || hostname.size() );
-	if (!program) {
-		valid_mode &= !( (crate || fru) && !(crate && fru) );
-		valid_mode &= !( (crate || fru) && hostname.size() );
+	for (auto it = valid_mode_list.begin(); it != valid_mode_list.end(); it++) {
+		if (
+				it->program == program &&
+				it->crate == (crate ? true : false) &&
+				it->fru == (fru ? true : false) &&
+				it->hostname == (hostname.size() ? true : false) &&
+				it->list == list
+				) {
+			valid_mode = true;
+			break;
+		}
 	}
 
 	if (option_vars.count("help")
@@ -200,6 +228,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 		printf("With crate & fru:  Look up the card's identity (hostname)\n");
 		printf("With hostname:     Search for a matching card\n");
 		printf("With --program:    Write the card's identity to EEPROM\n");
+		printf("With list:         List all supported cards [in the specified crate]\n");
 		printf("\n");
 		std::cout << option_normal << "\n";
 		return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
@@ -251,6 +280,38 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 			}
 			printf("Card not found in any online crate.\n");
 			return EXIT_UNSUCCESSFUL;
+		}
+		else if (list) {
+			std::vector<sysmgr::crate_info> crates = sysmgr.list_crates();
+			for (auto crateit = crates.begin(); crateit != crates.end(); crateit++) {
+				if (!crateit->connected)
+					continue;
+
+				if (crate && crate != crateit->crateno)
+					continue;
+
+				std::vector<sysmgr::card_info> cards = sysmgr.list_cards(crateit->crateno);
+				for (auto cardit = cards.begin(); cardit != cards.end(); cardit++) {
+					if (supported_card_types.find(cardit->name) != supported_card_types.end()) {
+						try {
+							int hw_area_offset = get_hw_info_area_offset(sysmgr, crateit->crateno, cardit->fru);
+							uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru, hw_area_offset);
+							if (card_serial) {
+								printf("Crate %hhu, %5s: %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), serial_to_name(card_serial, cardit->name).c_str());
+							}
+							else if (verbose)
+								printf("Crate %hhu, %5s: unidentified: %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->name.c_str());
+							continue;
+						}
+						catch (std::range_error &e) { /* unsupported */ }
+						catch (std::runtime_error &e) { /* unsupported */ }
+					}
+
+					if (verbose)
+						printf("Crate %hhu, %5s: unsupported: %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->name.c_str());
+				}
+			}
+			return EXIT_OK;
 		}
 		else {
 			int hw_area_offset = get_hw_info_area_offset(sysmgr, crate, fru);
