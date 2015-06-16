@@ -17,7 +17,7 @@ ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp))
 	g++ $(CCOPTS) $(DEPOPTS) -c -o $@ $<
 
 rpm: all
-	IPMIMT_ROOT=$(PWD) rpmbuild --sign -ba --quiet --define "_topdir $(PWD)/rpm" sysmgr.spec
+	IPMIMT_ROOT=$(PWD) rpmbuild --sign -ba --quiet --define "_topdir $(PWD)/rpm" ipmimt.spec
 	cp -v $(PWD)/rpm/RPMS/*/*.rpm ./
 	rm -rf $(PWD)/rpm/
 
