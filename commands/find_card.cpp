@@ -48,7 +48,7 @@ static int get_hw_info_area_offset(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_
 {
 	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x40, 0x00 }));
 	if (response[0] != 0)
-		throw std::runtime_error(stdsprintf("bad response code reading hw info area offset: %2hhx", response[0]));
+		throw std::runtime_error(stdsprintf("bad response code reading hw info area offset: %2hhxh", response[0]));
 	response.erase(response.begin());
 
 	return response[4] | (response[5]<<8);
@@ -81,7 +81,7 @@ static uint32_t read_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, 
 {
 	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(hw_info_area_offset & 0xff), static_cast<uint8_t>(hw_info_area_offset >> 8), 18 }));
 	if (response[0] != 0)
-		throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhx", response[0]));
+		throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhxh", response[0]));
 	response.erase(response.begin());
 
 	if (response.size() != 18)
@@ -95,7 +95,7 @@ static uint32_t read_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, 
 	uint8_t area_checksum = ipmi_checksum(response);
 
 	if (area_checksum != expected_checksum)
-		throw std::range_error(stdsprintf("bad hardware info area checksum: expected %02hhx, got %02hhx", expected_checksum, area_checksum));
+		throw std::range_error(stdsprintf("bad hardware info area checksum: expected %02hhxh, got %02hhxh", expected_checksum, area_checksum));
 
 	if (response[12] != 0 || response[8] != 0)
 		throw std::range_error(stdsprintf("serial number out of supported range: Revision: 0x%2hhx%2hhx, Serial: 0x%2hhx%02hhx%02hhx%02hhx",
@@ -109,7 +109,7 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 {
 	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(hw_info_area_offset & 0xff), static_cast<uint8_t>(hw_info_area_offset >> 8), 18 }));
 	if (response[0] != 0)
-		throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhx", response[0]));
+		throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhxh", response[0]));
 	response.erase(response.begin());
 
 	if (response.size() != 18)
@@ -123,7 +123,7 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 	uint8_t area_checksum = ipmi_checksum(response);
 
 	if (area_checksum != expected_checksum && !force)
-		throw std::range_error(stdsprintf("bad hardware info area checksum: expected %02hhx, got %02hhx", expected_checksum, area_checksum));
+		throw std::range_error(stdsprintf("bad hardware info area checksum: expected %02hhxh, got %02hhxh", expected_checksum, area_checksum));
 
 	// Card Revision
 	response[7] = (serial>>24);
@@ -143,7 +143,7 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 	control_sequence.insert(control_sequence.end(), response.begin(), response.end());
 	response = sysmgr.raw_card(crate, fru, control_sequence);
 	if (response[0] != 0)
-		throw std::runtime_error(stdsprintf("bad response code writing hw info area: %2hhx", response[0]));
+		throw std::runtime_error(stdsprintf("bad response code writing hw info area: %2hhxh", response[0]));
 }
 
 int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> args)

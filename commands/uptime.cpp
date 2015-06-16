@@ -89,7 +89,7 @@ int Command_uptime::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> arg
 		if ((response.size() % 4) != 1) {
 			printf("Invalid response length.  Data:");
 			for (auto it = response.begin(); it != response.end(); it++)
-				printf(" %02hhx", *it);
+				printf(" %02hhxh", *it);
 			printf("\n");
 			return EXIT_REMOTE_ERROR;
 		}
