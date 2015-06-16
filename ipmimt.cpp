@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	
 	opt::options_description option_normal("Global options");
 	option_normal.add_options()
-		("help", "help")
+		("help", "help (also supported by all subcommands)")
 		("host,H", opt::value<std::string>(&sysmgr_host)->default_value("localhost"), "system manager hostname")
 		("pass,P", opt::value<std::string>(&sysmgr_pass)->default_value(""), "system manager password")
 		("port", opt::value<uint16_t>(&sysmgr_port)->default_value(4681), "system manager port");

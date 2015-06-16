@@ -71,7 +71,7 @@ int Command_backend_power::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 			printf("Operational Setting: %s\n", response[1] ? "enabled" : "disabled");
 			printf("Current State:       %s\n", response[2] ? "online" : "offline");
 		}
-		else {
+		else if (set_eeprom || set_active) {
 			std::vector<uint8_t> control_sequence = { 0x32, 0x01, 0 };
 			if (set_eeprom)
 				control_sequence[2] |= 0x80;
@@ -83,6 +83,9 @@ int Command_backend_power::execute(sysmgr::sysmgr &sysmgr, std::vector<std::stri
 			std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, control_sequence);
 			if (response[0] != 0)
 				printf("IPMI error, response code 0x%02x\n", response[0]);
+		}
+		else {
+			printf("Nothing to set.\n");
 		}
 	}
 	catch (sysmgr::sysmgr_exception &e) {
