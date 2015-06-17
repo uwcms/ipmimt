@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include "../Command.h"
+#include "../libs/wisc_mmc_functions.h"
 
 class Command_find_card : public Command {
 	public:
@@ -49,16 +50,6 @@ static std::string serial_to_name(uint32_t serial, const std::string &card_type)
 	}
 }
 
-static int get_hw_info_area_offset(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru)
-{
-	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x40, 0x00 }));
-	if (response[0] != 0)
-		throw std::runtime_error(stdsprintf("bad response code reading hw info area offset: %2hhxh", response[0]));
-	response.erase(response.begin());
-
-	return response[4] | (response[5]<<8);
-}
-
 /*
    typedef struct {
    0	unsigned char EEP_format_flag;
@@ -82,9 +73,11 @@ static int get_hw_info_area_offset(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_
    } hardware_info_area_t;
    */
 
-static uint32_t read_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int hw_info_area_offset)
+static uint32_t read_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru)
 {
-	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(hw_info_area_offset & 0xff), static_cast<uint8_t>(hw_info_area_offset >> 8), 18 }));
+	WiscMMC::nonvolatile_area_info nvinfo(sysmgr, crate, fru);
+
+	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(nvinfo.hw_info_area.offset & 0xff), static_cast<uint8_t>(nvinfo.hw_info_area.offset >> 8), 18 }));
 	if (response[0] != 0)
 		throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhxh", response[0]));
 	response.erase(response.begin());
@@ -110,9 +103,11 @@ static uint32_t read_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, 
 	return (response[7]<<24) | (response[11]<<16) | (response[10]<<8) | response[9];
 }
 
-static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int hw_info_area_offset, uint32_t serial, bool force = false)
+static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, uint32_t serial, bool force = false)
 {
-	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(hw_info_area_offset & 0xff), static_cast<uint8_t>(hw_info_area_offset >> 8), 18 }));
+	WiscMMC::nonvolatile_area_info nvinfo(sysmgr, crate,fru);
+
+	std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(nvinfo.hw_info_area.offset & 0xff), static_cast<uint8_t>(nvinfo.hw_info_area.offset >> 8), 18 }));
 	if (response[0] != 0)
 		throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhxh", response[0]));
 	response.erase(response.begin());
@@ -144,7 +139,7 @@ static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, int
 	response[17] = 0;
 	response[17] = ipmi_checksum(response);
 
-	std::vector<uint8_t> control_sequence = { 0x32, 0x41, static_cast<uint8_t>(hw_info_area_offset & 0xff), static_cast<uint8_t>(hw_info_area_offset >> 8), 18 };
+	std::vector<uint8_t> control_sequence = { 0x32, 0x41, static_cast<uint8_t>(nvinfo.hw_info_area.offset & 0xff), static_cast<uint8_t>(nvinfo.hw_info_area.offset >> 8), 18 };
 	control_sequence.insert(control_sequence.end(), response.begin(), response.end());
 	response = sysmgr.raw_card(crate, fru, control_sequence);
 	if (response[0] != 0)
@@ -248,8 +243,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 
 	try {
 		if (program) {
-			int hw_area_offset = get_hw_info_area_offset(sysmgr, crate, fru);
-			write_serial(sysmgr, crate, fru, hw_area_offset, serial_of_hostname, force);
+			write_serial(sysmgr, crate, fru, serial_of_hostname, force);
 		}
 		else if (hostname.size()) {
 			std::vector<sysmgr::crate_info> crates = sysmgr.list_crates();
@@ -263,8 +257,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 						continue;
 
 					try {
-						int hw_area_offset = get_hw_info_area_offset(sysmgr, crateit->crateno, cardit->fru);
-						uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru, hw_area_offset);
+						uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru);
 						if (card_serial == serial_of_hostname) {
 							printf("Crate %hhu, %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str());
 							return EXIT_OK;
@@ -294,8 +287,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 				for (auto cardit = cards.begin(); cardit != cards.end(); cardit++) {
 					if (supported_card_types.find(cardit->name) != supported_card_types.end()) {
 						try {
-							int hw_area_offset = get_hw_info_area_offset(sysmgr, crateit->crateno, cardit->fru);
-							uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru, hw_area_offset);
+							uint32_t card_serial = read_serial(sysmgr, crateit->crateno, cardit->fru);
 							if (card_serial) {
 								printf("Crate %hhu, %5s: %s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), serial_to_name(card_serial, cardit->name).c_str());
 							}
@@ -314,8 +306,7 @@ int Command_find_card::execute(sysmgr::sysmgr &sysmgr, std::vector<std::string> 
 			return EXIT_OK;
 		}
 		else {
-			int hw_area_offset = get_hw_info_area_offset(sysmgr, crate, fru);
-			uint32_t card_serial = read_serial(sysmgr, crate, fru, hw_area_offset);
+			uint32_t card_serial = read_serial(sysmgr, crate, fru);
 			std::string card_type;
 			try {
 				std::vector<sysmgr::card_info> cards = sysmgr.list_cards(crate);
