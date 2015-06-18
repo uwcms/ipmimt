@@ -72,8 +72,10 @@ namespace {
 
 		try {
 			raw_data = sysmgr.raw_direct(crate, final_chan, final_addr, raw_data);
-			for (auto it = raw_data.begin(); it != raw_data.end(); it++)
-				printf("%s%02hhu", (it == raw_data.begin() ? "" : " "), *it);
+			printf("%02hhx ", raw_data[0]);
+			for (auto it = raw_data.begin()+1; it != raw_data.end(); it++)
+				printf(" %02hhx", *it);
+			printf("\n");
 		}
 		catch (sysmgr::sysmgr_exception &e) {
 			printf("sysmgr error: %s\n", e.message.c_str());

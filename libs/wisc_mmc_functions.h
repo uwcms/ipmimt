@@ -5,15 +5,25 @@
 #include "stdint.h"
 
 namespace WiscMMC {
-	class nonvolatile_area_info {
+	class nonvolatile_area {
+		protected:
+			uint8_t crate;
+			uint8_t fru;
 		public:
 			class eeprom_area {
+				protected:
+					nonvolatile_area *nva;
+					eeprom_area(nonvolatile_area *nva, uint16_t offset = 0, uint16_t size = 0)
+						: nva(nva), offset(offset), size(size) { };
+					friend class nonvolatile_area;
 				public:
 					uint16_t offset;
 					uint16_t size;
-					eeprom_area(uint16_t offset = 0, uint16_t size = 0)
-						: offset(offset), size(size) { };
+					void nv_write(sysmgr::sysmgr &sysmgr, uint16_t offset, std::vector<uint8_t> data);
+					std::vector<uint8_t> nv_read(sysmgr::sysmgr &sysmgr, uint16_t offset, uint16_t len);
 			};
+			friend class eeprom_area;
+
 			uint8_t format_code;
 			uint16_t eeprom_size;
 			eeprom_area hw_info_area;
@@ -27,8 +37,33 @@ namespace WiscMMC {
 			 *   adc_scaling_factor_area
 			 */
 
-			nonvolatile_area_info() { };
-			nonvolatile_area_info(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru);
+			nonvolatile_area(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru);
+			void nv_write(sysmgr::sysmgr &sysmgr, uint16_t offset, std::vector<uint8_t> data);
+			std::vector<uint8_t> nv_read(sysmgr::sysmgr &sysmgr, uint16_t offset, uint16_t len);
+	};
+
+	class fpga_config {
+		protected:
+			uint8_t crate;
+			uint8_t fru;
+			nonvolatile_area nvarea;
+
+		public:
+			bool auto_slotid; // REPLACE byte 0 of config_vector with slotid
+			// indexed by fpga id:
+			static const int num_fpgas_supported = 3;
+			bool config_enable[num_fpgas_supported];
+			std::vector<uint8_t> config_vector[num_fpgas_supported];
+
+			fpga_config(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru)
+				: crate(crate), fru(fru), nvarea(sysmgr, crate, fru) { };
+			void read(sysmgr::sysmgr &sysmgr);
+			void write(sysmgr::sysmgr &sysmgr);
+			void erase(sysmgr::sysmgr &sysmgr);
+
+			// OR mask of  1: nonvolatile setting,  2: operational setting
+			uint8_t get_global_enable(sysmgr::sysmgr &sysmgr);
+			void set_global_enable(sysmgr::sysmgr &sysmgr, bool enable);
 	};
 };
 

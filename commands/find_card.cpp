@@ -77,75 +77,59 @@ namespace {
 
 	static uint32_t read_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru)
 	{
-		WiscMMC::nonvolatile_area_info nvinfo(sysmgr, crate, fru);
+		WiscMMC::nonvolatile_area nvarea(sysmgr, crate, fru);
 
-		std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(nvinfo.hw_info_area.offset & 0xff), static_cast<uint8_t>(nvinfo.hw_info_area.offset >> 8), 18 }));
-		if (response[0] != 0)
-			throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhxh", response[0]));
-		response.erase(response.begin());
+		std::vector<uint8_t> nvdata = nvarea.hw_info_area.nv_read(sysmgr, 0, 18);
 
-		if (response.size() != 18)
-			throw std::range_error(stdsprintf("unexpected hardware info area size (wanted 18): %u", response.size()));
+		if (nvdata[1] != 1)
+			throw std::range_error(stdsprintf("unexpected hardware info area version (wanted 1): %hhu", nvdata[1]));
 
-		if (response[1] != 1)
-			throw std::range_error(stdsprintf("unexpected hardware info area version (wanted 1): %hhu", response[1]));
-
-		uint8_t expected_checksum = response[17];
-		response[17] = 0;
-		uint8_t area_checksum = ipmi_checksum(response);
+		uint8_t expected_checksum = nvdata[17];
+		nvdata[17] = 0;
+		uint8_t area_checksum = ipmi_checksum(nvdata);
 
 		if (area_checksum != expected_checksum)
 			throw std::range_error(stdsprintf("bad hardware info area checksum: expected %02hhxh, got %02hhxh", expected_checksum, area_checksum));
 
-		if (response[12] != 0 || response[8] != 0)
+		if (nvdata[12] != 0 || nvdata[8] != 0)
 			throw std::range_error(stdsprintf("serial number out of supported range: Revision: 0x%2hhx%2hhx, Serial: 0x%2hhx%02hhx%02hhx%02hhx",
-						response[8], response[7], response[12], response[11], response[10], response[9]));
+						nvdata[8], nvdata[7], nvdata[12], nvdata[11], nvdata[10], nvdata[9]));
 
 		// return value: { RevL, Serial2, Serial1, Serial0 }
-		return (response[7]<<24) | (response[11]<<16) | (response[10]<<8) | response[9];
+		return (nvdata[7]<<24) | (nvdata[11]<<16) | (nvdata[10]<<8) | nvdata[9];
 	}
 
 	static void write_serial(sysmgr::sysmgr &sysmgr, uint8_t crate, uint8_t fru, uint32_t serial, bool force = false)
 	{
-		WiscMMC::nonvolatile_area_info nvinfo(sysmgr, crate,fru);
+		WiscMMC::nonvolatile_area nvarea(sysmgr, crate, fru);
 
-		std::vector<uint8_t> response = sysmgr.raw_card(crate, fru, std::vector<uint8_t>({ 0x32, 0x42, static_cast<uint8_t>(nvinfo.hw_info_area.offset & 0xff), static_cast<uint8_t>(nvinfo.hw_info_area.offset >> 8), 18 }));
-		if (response[0] != 0)
-			throw std::runtime_error(stdsprintf("bad response code reading hw info area: %2hhxh", response[0]));
-		response.erase(response.begin());
+		std::vector<uint8_t> nvdata = nvarea.hw_info_area.nv_read(sysmgr, 0, 18);
 
-		if (response.size() != 18)
-			throw std::range_error(stdsprintf("unexpected hardware info area size (wanted 18): %u", response.size()));
+		if (nvdata[1] != 1)
+			throw std::range_error(stdsprintf("unexpected hardware info area version (wanted 1): %hhu", nvdata[1]));
 
-		if (response[1] != 1)
-			throw std::range_error(stdsprintf("unexpected hardware info area version (wanted 1): %hhu", response[1]));
-
-		uint8_t expected_checksum = response[17];
-		response[17] = 0;
-		uint8_t area_checksum = ipmi_checksum(response);
+		uint8_t expected_checksum = nvdata[17];
+		nvdata[17] = 0;
+		uint8_t area_checksum = ipmi_checksum(nvdata);
 
 		if (area_checksum != expected_checksum && !force)
 			throw std::range_error(stdsprintf("bad hardware info area checksum: expected %02hhxh, got %02hhxh", expected_checksum, area_checksum));
 
 		// Card Revision
-		response[7] = (serial>>24);
-		response[8] = 0;
+		nvdata[7] = (serial>>24);
+		nvdata[8] = 0;
 
 		// Card Serial
-		response[9]  = serial & 0xff;
-		response[10] = (serial >> 8) & 0xff;
-		response[11] = (serial >> 16) & 0xff;
-		response[12] = 0;
+		nvdata[9]  = serial & 0xff;
+		nvdata[10] = (serial >> 8) & 0xff;
+		nvdata[11] = (serial >> 16) & 0xff;
+		nvdata[12] = 0;
 
 		// Update checksum
-		response[17] = 0;
-		response[17] = ipmi_checksum(response);
+		nvdata[17] = 0;
+		nvdata[17] = ipmi_checksum(nvdata);
 
-		std::vector<uint8_t> control_sequence = { 0x32, 0x41, static_cast<uint8_t>(nvinfo.hw_info_area.offset & 0xff), static_cast<uint8_t>(nvinfo.hw_info_area.offset >> 8), 18 };
-		control_sequence.insert(control_sequence.end(), response.begin(), response.end());
-		response = sysmgr.raw_card(crate, fru, control_sequence);
-		if (response[0] != 0)
-			throw std::runtime_error(stdsprintf("bad response code writing hw info area: %2hhxh", response[0]));
+		nvarea.hw_info_area.nv_write(sysmgr, 0, nvdata);
 	}
 
 	class Mode {
