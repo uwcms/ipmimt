@@ -62,16 +62,6 @@ namespace {
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
-		int fru = 0;
-		try {
-			if (frustr.size())
-				fru = parse_fru_string(frustr);
-		}
-		catch (std::range_error &e) {
-			printf("Invalid FRU name \"%s\"", frustr.c_str());
-			return EXIT_PARAM_ERROR;
-		}
-
 		std::vector<uint8_t> config_vector[3];
 		try {
 			for (int i = 0; i < 3; i++)
@@ -83,7 +73,8 @@ namespace {
 		}
 
 		if (option_vars.count("help")
-				|| crate <= 0
+				|| option_vars["crate"].empty()
+				|| option_vars["fru"].empty()
 				|| (enable && disable)
 				|| (!write && (!option_vars["fpga0"].empty() || !option_vars["fpga1"].empty() || !option_vars["fpga2"].empty()))
 				|| (autoslot && !write) ) {
@@ -97,6 +88,16 @@ namespace {
 			std::cout << option_normal << "\n";
 			printf("Specify --fpga# as --fpga0=\"byte byte byte byte\"\n");
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
+		int fru = 0;
+		try {
+			if (frustr.size())
+				fru = parse_fru_string(frustr);
+		}
+		catch (std::range_error &e) {
+			printf("Invalid FRU name \"%s\"", frustr.c_str());
+			return EXIT_PARAM_ERROR;
 		}
 
 		try {

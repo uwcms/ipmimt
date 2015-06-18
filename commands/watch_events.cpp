@@ -46,16 +46,6 @@ namespace {
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
-		int fru = 0xff;
-		try {
-			if (frustr.size())
-				fru = parse_fru_string(frustr);
-		}
-		catch (std::range_error &e) {
-			printf("Invalid FRU name \"%s\"", frustr.c_str());
-			return EXIT_PARAM_ERROR;
-		}
-
 		bool bad_config = false;
 		uint32_t assertmask, deassertmask;
 		try {
@@ -67,13 +57,21 @@ namespace {
 			bad_config = true;
 		}
 
-		if (option_vars.count("help")
-				|| fru <= 0 || fru > 255
-				|| crate <= 0 || bad_config) {
+		if (option_vars.count("help") || bad_config) {
 			printf("ipmimt watch_events [arguments]\n");
 			printf("\n");
 			std::cout << option_normal << "\n";
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
+		int fru = 0xff;
+		try {
+			if (frustr.size())
+				fru = parse_fru_string(frustr);
+		}
+		catch (std::range_error &e) {
+			printf("Invalid FRU name \"%s\"", frustr.c_str());
+			return EXIT_PARAM_ERROR;
 		}
 
 		try {

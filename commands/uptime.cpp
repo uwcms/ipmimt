@@ -62,6 +62,15 @@ namespace {
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
+		if (option_vars.count("help")
+				|| option_vars["fru"].empty()
+				|| option_vars["crate"].empty()) {
+			printf("ipmimt uptime [arguments] [crate fru]\n");
+			printf("\n");
+			std::cout << option_normal << "\n";
+			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
 		int fru = 0;
 		try {
 			if (frustr.size())
@@ -70,15 +79,6 @@ namespace {
 		catch (std::range_error &e) {
 			printf("Invalid FRU name \"%s\"", frustr.c_str());
 			return EXIT_PARAM_ERROR;
-		}
-
-		if (option_vars.count("help")
-				|| fru <= 0 || fru > 255
-				|| crate <= 0) {
-			printf("ipmimt uptime [arguments] [crate fru]\n");
-			printf("\n");
-			std::cout << option_normal << "\n";
-			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 		}
 
 		try {

@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 		return EXIT_OK;
 	}
 
-	if (argc == 1 || option_vars.count("help") || option_vars["command"].defaulted() || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
+	if (argc == 1 || option_vars.count("help") || option_vars["command"].empty() || REGISTERED_COMMANDS->find(command) == REGISTERED_COMMANDS->end()) {
 		printf("%s [options] command [arguments]\n", argv[0]);
 		printf("\n");
 		std::cout << option_normal << "\n";

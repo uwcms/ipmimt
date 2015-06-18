@@ -168,16 +168,6 @@ namespace {
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
-		int fru = 0;
-		try {
-			if (frustr.size())
-				fru = parse_fru_string(frustr);
-		}
-		catch (std::range_error &e) {
-			printf("Invalid FRU name \"%s\"", frustr.c_str());
-			return EXIT_PARAM_ERROR;
-		}
-
 		std::vector<Mode> valid_mode_list = {
 			//             program, crate, fru,   hostname, list
 			Mode(true,    true,  true,  true,     false), // Program Mode
@@ -190,9 +180,9 @@ namespace {
 		for (auto it = valid_mode_list.begin(); it != valid_mode_list.end(); it++) {
 			if (
 					it->program == program &&
-					it->crate == (crate ? true : false) &&
-					it->fru == (fru ? true : false) &&
-					it->hostname == (hostname.size() ? true : false) &&
+					it->crate == !option_vars["crate"].empty() &&
+					it->fru == !option_vars["fru"].empty() &&
+					it->hostname == !option_vars["hostname"].empty() &&
 					it->list == list
 			   ) {
 				valid_mode = true;
@@ -201,8 +191,6 @@ namespace {
 		}
 
 		if (option_vars.count("help")
-				|| fru <= 0 || fru > 255
-				|| crate <= 0
 				|| !valid_mode) {
 			printf("ipmimt find_card [arguments] [hostname]\n");
 			printf("\n");
@@ -213,6 +201,16 @@ namespace {
 			printf("\n");
 			std::cout << option_normal << "\n";
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
+		int fru = 0;
+		try {
+			if (frustr.size())
+				fru = parse_fru_string(frustr);
+		}
+		catch (std::range_error &e) {
+			printf("Invalid FRU name \"%s\"", frustr.c_str());
+			return EXIT_PARAM_ERROR;
 		}
 
 		uint32_t serial_of_hostname = 0;

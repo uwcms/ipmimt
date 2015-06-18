@@ -41,6 +41,16 @@ namespace {
 		if (parse_config(args, option_all, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
+		if (option_vars.count("help")
+				|| option_vars["fru"].empty()
+				|| !(setting == "enable" || setting == "disable" || setting == "status")
+				|| option_vars["crate"].empty()) {
+			printf("ipmimt backend_power [arguments] (enable|disable|status)\n");
+			printf("\n");
+			std::cout << option_normal << "\n";
+			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
 		int fru = 0;
 		try {
 			if (frustr.size())
@@ -50,17 +60,6 @@ namespace {
 			printf("Invalid FRU name \"%s\"", frustr.c_str());
 			return EXIT_PARAM_ERROR;
 		}
-
-		if (option_vars.count("help")
-				|| fru <= 0 || fru > 255
-				|| !(setting == "enable" || setting == "disable" || setting == "status")
-				|| crate <= 0) {
-			printf("ipmimt backend_power [arguments] (enable|disable|status)\n");
-			printf("\n");
-			std::cout << option_normal << "\n";
-			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
-		}
-
 
 		try {
 			if (setting == "status") {

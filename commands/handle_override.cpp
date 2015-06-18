@@ -39,6 +39,38 @@ namespace {
 		if (parse_config(args, option_all, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
+		bool bad_config = false;
+
+		std::vector<uint8_t> control_sequence;
+
+		if (!option_vars.count("help")) {
+			if (action == "release")
+				control_sequence = { 0x32, 0x0f, 0x00 };
+			else if (action == "in")
+				control_sequence = { 0x32, 0x0f, 0x80 };
+			else if (action == "out")
+				control_sequence = { 0x32, 0x0f, 0x81 };
+			else if (action == "cycle") {
+				control_sequence = { 0x32, 0x0f, 0x81, 0 };
+				control_sequence[3] = cycle_length*10;
+			}
+			else {
+				printf("Unknown action \"%s\"\n", action.c_str());
+				bad_config = true;
+			}
+		}
+
+		if (option_vars.count("help")
+				|| option_vars["fru"].empty()
+				|| cycle_length <= 0 || cycle_length > 255
+				|| option_vars["crate"].empty()
+				|| bad_config) {
+			printf("ipmimt handle_override [arguments] (release|in|out|cycle)\n");
+			printf("\n");
+			std::cout << option_normal << "\n";
+			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
 		int fru = 0;
 		try {
 			if (frustr.size())
@@ -47,36 +79,6 @@ namespace {
 		catch (std::range_error &e) {
 			printf("Invalid FRU name \"%s\"", frustr.c_str());
 			return EXIT_PARAM_ERROR;
-		}
-
-		bool bad_config = false;
-
-		std::vector<uint8_t> control_sequence;
-
-		if (action == "release")
-			control_sequence = { 0x32, 0x0f, 0x00 };
-		else if (action == "in")
-			control_sequence = { 0x32, 0x0f, 0x80 };
-		else if (action == "out")
-			control_sequence = { 0x32, 0x0f, 0x81 };
-		else if (action == "cycle") {
-			control_sequence = { 0x32, 0x0f, 0x81, 0 };
-			control_sequence[3] = cycle_length*10;
-		}
-		else {
-			printf("Unknown action \"%s\"\n", action.c_str());
-			bad_config = true;
-		}
-
-		if (option_vars.count("help")
-				|| fru <= 0 || fru > 255
-				|| cycle_length <= 0 || cycle_length > 255
-				|| crate <= 0
-				|| bad_config) {
-			printf("ipmimt handle_override [arguments] (release|in|out|cycle)\n");
-			printf("\n");
-			std::cout << option_normal << "\n";
-			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 		}
 
 		try {

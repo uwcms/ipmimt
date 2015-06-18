@@ -37,16 +37,6 @@ namespace {
 		if (parse_config(args, option_all, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
-		int fru = 0;
-		try {
-			if (frustr.size())
-				fru = parse_fru_string(frustr);
-		}
-		catch (std::range_error &e) {
-			printf("Invalid FRU name \"%s\"", frustr.c_str());
-			return EXIT_PARAM_ERROR;
-		}
-
 		std::vector<uint8_t> raw_data;
 		bool bad_raw = false;
 		for (auto it = raw_input.begin(); it != raw_input.end(); it++) {
@@ -64,11 +54,21 @@ namespace {
 			}
 		}
 
-		if (option_vars.count("help") || !raw_data.size() || fru <= 0 || fru > 255 || crate <= 0 || bad_raw) {
+		if (option_vars.count("help") || !raw_data.size() || option_vars["fru"].empty() || option_vars["crate"].empty() || bad_raw) {
 			printf("ipmimt raw_card [arguments] raw_bytes ...\n");
 			printf("\n");
 			std::cout << option_normal << "\n";
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
+		int fru = 0;
+		try {
+			if (frustr.size())
+				fru = parse_fru_string(frustr);
+		}
+		catch (std::range_error &e) {
+			printf("Invalid FRU name \"%s\"", frustr.c_str());
+			return EXIT_PARAM_ERROR;
 		}
 
 		try {

@@ -28,6 +28,15 @@ namespace {
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
 
+		if (option_vars.count("help")
+				|| option_vars["fru"].empty()
+				|| option_vars["crate"].empty()) {
+			printf("ipmimt cold_reset [arguments]\n");
+			printf("\n");
+			std::cout << option_normal << "\n";
+			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
+		}
+
 		int fru = 0;
 		try {
 			if (frustr.size())
@@ -36,15 +45,6 @@ namespace {
 		catch (std::range_error &e) {
 			printf("Invalid FRU name \"%s\"", frustr.c_str());
 			return EXIT_PARAM_ERROR;
-		}
-
-		if (option_vars.count("help")
-				|| fru < 0 || fru > 255
-				|| crate <= 0) {
-			printf("ipmimt cold_reset [arguments]\n");
-			printf("\n");
-			std::cout << option_normal << "\n";
-			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
 		}
 
 		std::vector<uint8_t> control_sequence = { 0x2c, 0x04, 0x00, 0, 0x00 };

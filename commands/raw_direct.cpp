@@ -42,28 +42,30 @@ namespace {
 		bool bad_data = false;
 		std::vector<uint8_t> raw_data;
 		uint32_t final_addr;
-		try {
-			final_addr = parse_uint32(final_addr_str);
-			if (final_addr > 255)
-				throw std::range_error(stdsprintf("invalid address, value out of range: %s", final_addr_str.c_str()));
+		if (!option_vars.count("help")) {
+			try {
+				final_addr = parse_uint32(final_addr_str);
+				if (final_addr > 255)
+					throw std::range_error(stdsprintf("invalid address, value out of range: %s", final_addr_str.c_str()));
 
-			for (auto it = raw_input.begin(); it != raw_input.end(); it++) {
-				uint32_t raw_value = parse_uint32(*it);
-				if (raw_value > 255)
-					throw std::range_error(stdsprintf("invalid raw byte, value out of range: %s", it->c_str()));
+				for (auto it = raw_input.begin(); it != raw_input.end(); it++) {
+					uint32_t raw_value = parse_uint32(*it);
+					if (raw_value > 255)
+						throw std::range_error(stdsprintf("invalid raw byte, value out of range: %s", it->c_str()));
 
-				raw_data.push_back(raw_value);
+					raw_data.push_back(raw_value);
+				}
 			}
-		}
-		catch (std::range_error &e) {
-			printf("%s\n", e.what());
-			bad_data = true;
+			catch (std::range_error &e) {
+				printf("%s\n", e.what());
+				bad_data = true;
+			}
 		}
 
 		if (option_vars.count("help") || !raw_data.size()
-				|| final_chan < 0 || final_chan > 255
-				|| final_addr < 0 || final_addr > 255
-				|| crate <= 0 || bad_data) {
+				|| option_vars["channel"].empty() || final_chan < 0 || final_chan > 255
+				|| option_vars["target"].empty() || final_addr < 0 || final_addr > 255
+				|| option_vars["crate"].empty() || bad_data) {
 			printf("ipmimt raw_direct [arguments] raw_bytes ...\n");
 			printf("\n");
 			std::cout << option_normal << "\n";
