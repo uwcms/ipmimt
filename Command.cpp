@@ -74,6 +74,13 @@ uint32_t parse_uint32(const std::string &token)
 	return val;
 }
 
+uint8_t parse_uint8(const std::string &token) {
+	uint32_t ret = parse_uint32(token);
+	if (ret > 0xff)
+		throw std::range_error(stdsprintf("value too large for uint8_t: \"%u\"", ret));
+	return ret;
+}
+
 uint8_t parse_fru_string(const std::string &frustr)
 {
 	try {
@@ -108,11 +115,11 @@ uint8_t parse_fru_string(const std::string &frustr)
 		throw std::range_error(stdsprintf("unknown FRU type \"%s\"", frustr.c_str()));
 }
 
-uint8_t ipmi_checksum(const std::vector<uint8_t> &data)
+uint8_t ipmi_checksum(const std::vector<uint8_t>::const_iterator &begin, const std::vector<uint8_t>::const_iterator &end)
 {
 	int8_t checksum = 0;
 
-	for (auto it = data.begin(); it != data.end(); it++)
+	for (auto it = begin; it != end; it++)
 		checksum = (checksum + *it) % 256;
 
 	return (-checksum);

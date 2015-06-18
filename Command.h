@@ -52,8 +52,12 @@ int parse_config(std::vector<std::string> argv,
 
 std::string stdsprintf(const char *fmt, ...);
 uint32_t parse_uint32(const std::string &token);
+uint8_t parse_uint8(const std::string &token);
 uint8_t parse_fru_string(const std::string &frustr);
 
-uint8_t ipmi_checksum(const std::vector<uint8_t> &data);
+uint8_t ipmi_checksum(const std::vector<uint8_t>::const_iterator &begin, const std::vector<uint8_t>::const_iterator &end);
+inline uint8_t ipmi_checksum(const std::vector<uint8_t> &data) {
+	return ipmi_checksum(data.cbegin(), data.cend());
+};
 
 #endif
