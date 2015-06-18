@@ -68,8 +68,8 @@ namespace {
 		}
 
 		if (option_vars.count("help")
-				|| fru < 0 || fru > 255
-				|| crate < 0 || bad_config) {
+				|| fru <= 0 || fru > 255
+				|| crate <= 0 || bad_config) {
 			printf("ipmimt watch_events [arguments]\n");
 			printf("\n");
 			std::cout << option_normal << "\n";

@@ -37,7 +37,7 @@ std::vector<opt::option> opt_subcmd_parse_terminator(std::vector<std::string>& a
 int parse_config(std::vector<std::string> argv,
 		opt::options_description options,
 		opt::positional_options_description positional,
-		opt::variables_map option_vars,
+		opt::variables_map &option_vars,
 		std::vector<std::string> config_files)
 {
 	try {

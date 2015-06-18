@@ -201,8 +201,8 @@ namespace {
 		}
 
 		if (option_vars.count("help")
-				|| fru < 0 || fru > 255
-				|| crate < 0
+				|| fru <= 0 || fru > 255
+				|| crate <= 0
 				|| !valid_mode) {
 			printf("ipmimt find_card [arguments] [hostname]\n");
 			printf("\n");

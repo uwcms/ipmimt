@@ -83,7 +83,7 @@ namespace {
 		}
 
 		if (option_vars.count("help")
-				|| crate < 0
+				|| crate <= 0
 				|| (enable && disable)
 				|| (!write && (!option_vars["fpga0"].empty() || !option_vars["fpga1"].empty() || !option_vars["fpga2"].empty()))
 				|| (autoslot && !write) ) {
