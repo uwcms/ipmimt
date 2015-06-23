@@ -3,7 +3,7 @@
 
 Summary: University of Wisconsin IPMI Multitool
 Name: ipmimt
-Version: 0.1.0
+Version: 1.0.0
 Release: 1%{?dist}
 #Release: 1%{?dist}.%(git rev-parse --abbrev-ref HEAD | sed s/-/_/g)
 #BuildArch: %{_buildarch}
