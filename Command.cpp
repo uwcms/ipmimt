@@ -62,11 +62,11 @@ int parse_config(std::vector<std::string> argv,
 	return 0;
 }
 
-uint32_t parse_uint32(const std::string &token)
+uint32_t parse_uint32(const std::string &token, int radix)
 {
 	const char *str = token.c_str();
 	char *end;
-	unsigned long int val = strtoul(str, &end, 0);
+	unsigned long int val = strtoul(str, &end, radix);
 	if (end == str || *end != '\0')
 		throw std::range_error(stdsprintf("not a valid uint32_t: \"%s\"", str));
 	if ((val == ULONG_MAX && errno == ERANGE) || val > 0xffffffffu)
@@ -74,8 +74,8 @@ uint32_t parse_uint32(const std::string &token)
 	return val;
 }
 
-uint8_t parse_uint8(const std::string &token) {
-	uint32_t ret = parse_uint32(token);
+uint8_t parse_uint8(const std::string &token, int radix) {
+	uint32_t ret = parse_uint32(token, radix);
 	if (ret > 0xff)
 		throw std::range_error(stdsprintf("value too large for uint8_t: \"%u\"", ret));
 	return ret;
@@ -95,7 +95,7 @@ uint8_t parse_fru_string(const std::string &frustr)
 		throw std::range_error(stdsprintf("unparsable FRU name \"%s\"", frustr.c_str()));
 
 	std::string prefix = frustr.substr(0, numpos);
-	uint32_t num = parse_uint32(frustr.substr(numpos));
+	uint32_t num = parse_uint32(frustr.substr(numpos), 10);
 
 	if (prefix == "MCH")
 		return num+2;

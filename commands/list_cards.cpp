@@ -35,9 +35,9 @@ namespace {
 		}
 
 		try {
-			int ncrates = sysmgr.list_crates().size();
+			std::vector<sysmgr::crate_info> crates = sysmgr.list_crates();
 
-			if (crate > ncrates) {
+			if (crate > static_cast<int>(crates.size()) || crate < 0) {
 				printf("No such crate\n");
 				return EXIT_PARAM_ERROR;
 			}
@@ -50,10 +50,13 @@ namespace {
 			}
 			else {
 				printf("%s\t%s\t%s\t%s\n", "Crate", "FRU", "State", "Name");
-				for (int i = 1; i <= ncrates; i++) {
-					std::vector<sysmgr::card_info> sm_cards = sysmgr.list_cards(i);
-					for (auto it = sm_cards.begin(); it != sm_cards.end(); it++)
-						printf("%hhu\t%s\tM%hhu\t%s\n", i, sysmgr::sysmgr::get_slotstring(it->fru).c_str(), it->mstate, it->name.c_str());
+				for (auto crateit = crates.begin(); crateit != crates.end(); crateit++) {
+					if (!crateit->connected)
+						continue;
+
+					std::vector<sysmgr::card_info> sm_cards = sysmgr.list_cards(crateit->crateno);
+					for (auto cardit = sm_cards.begin(); cardit != sm_cards.end(); cardit++)
+						printf("%hhu\t%s\tM%hhu\t%s\n", crateit->crateno, sysmgr::sysmgr::get_slotstring(cardit->fru).c_str(), cardit->mstate, cardit->name.c_str());
 				}
 			}
 		}
