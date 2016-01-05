@@ -143,16 +143,21 @@ namespace {
 				}
 				printf("Auto-SlotID:    %s\n", (config.auto_slotid ? "On" : "Off"));
 				printf("\n");
-				for (int i = 0; i < 3; i++) {
-					if (config.config_enable[i]) {
-						printf("FPGA %u:", i);
-						for (auto it = config.config_vector[i].begin(); it != config.config_vector[i].end(); it++)
-							printf(" 0x%02hhx", *it);
+				const char *formats[2] = { " 0x%02hhx", " %hhu" };
+				for (int formatid = 0; formatid < 2; ++formatid) {
+					for (int i = 0; i < 3; i++) {
+						if (config.config_enable[i]) {
+							printf("FPGA %u:", i);
+							for (auto it = config.config_vector[i].begin(); it != config.config_vector[i].end(); it++)
+								printf(formats[formatid], *it);
+							printf("\n");
+						}
+						else {
+							printf("FPGA %u: disabled\n", i);
+						}
+					}
+					if (!formatid)
 						printf("\n");
-					}
-					else {
-						printf("FPGA %u: disabled\n", i);
-					}
 				}
 			}
 		}
