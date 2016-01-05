@@ -1,9 +1,8 @@
-%define commit %(git rev-parse HEAD)
-%define shortcommit %(git rev-parse --short=8 HEAD)
+%define commit %(git describe --match 'ipmimt_*' | sed -e 's/ipmimt_//')
 
 Summary: University of Wisconsin IPMI Multitool
 Name: ipmimt
-Version: 1.1.1
+Version: %(git describe --match 'ipmimt_*' | sed -e 's/ipmimt_v//;s/-/./g')
 Release: 1%{?dist}
 #Release: 1%{?dist}.%(git rev-parse --abbrev-ref HEAD | sed s/-/_/g)
 #BuildArch: %{_buildarch}

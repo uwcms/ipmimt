@@ -10,7 +10,7 @@ ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp libs/*.cpp)) .
 .PHONY: .obj/versioninfo.o
 .obj/versioninfo.o:
 	@mkdir -p .dep/ "$(dir $@)"
-	echo "const char *GIT_BRANCH = \"$$(git rev-parse --abbrev-ref HEAD)\"; const char *GIT_COMMIT = \"$$(git rev-parse HEAD)\"; const char *GIT_DIRTY = \"$$(git status --porcelain -z | sed -re 's/\x0/\\n/g')\";" | g++ $(CCOPTS) $(DEPOPTS) -c -o $@ -xc++ -
+	echo "const char *GIT_BRANCH = \"$(shell git rev-parse --abbrev-ref HEAD)\"; const char *GIT_COMMIT = \"$(shell git describe --match 'ipmimt_*')\"; const char *GIT_DIRTY = \"$$(git status --porcelain -z | sed -re 's/\x0/\\n/g')\";" | g++ $(CCOPTS) $(DEPOPTS) -c -o $@ -xc++ -
 
 .obj/%.o: %.cpp
 	@mkdir -p .dep/ "$(dir $@)"
