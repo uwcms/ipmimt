@@ -18,6 +18,7 @@ namespace {
 
 	static uint32_t name_to_serial(std::string name, std::string &card_type)
 	{
+		// Representing serials as byte3: rev, byte2downto0: serial
 		if (name.substr(0, 6) == "falcon") {
 			card_type = "WISC CTP-7";
 			return (1 << 24) | (parse_uint32(name.substr(6)) & 0x00ffffff);
@@ -29,6 +30,10 @@ namespace {
 		else if (name.substr(0, 5) == "eagle") {
 			card_type = "WISC CTP-7";
 			return (3 << 24) | (parse_uint32(name.substr(5)) & 0x00ffffff);
+		}
+		else if (name.substr(0, 7) == "kestrel") {
+			card_type = "WISC CIOZ";
+			return (1 << 24) | (parse_uint32(name.substr(7)) & 0x00ffffff);
 		}
 		else {
 			throw std::range_error("unsupported card series");
@@ -45,6 +50,13 @@ namespace {
 				throw std::range_error("unsupported WISC CTP-7 card revision");
 
 			const char *series[] = { "falcon", "raven", "eagle" };
+			return stdsprintf("%s%u", series[revision-1], serial);
+		}
+		if (card_type == "WISC CIOZ") {
+			if (revision < 1 || revision > 1)
+				throw std::range_error("unsupported WISC CIOZ card revision");
+
+			const char *series[] = { "kestrel" };
 			return stdsprintf("%s%u", series[revision-1], serial);
 		}
 		else {
