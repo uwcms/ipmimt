@@ -106,9 +106,9 @@ uint8_t parse_fru_string(const std::string &frustr)
 	else if (prefix == "AMC")
 		return num+4;
 	else if (prefix == "CU")
-		return num+40;
+		return num+39;
 	else if (prefix == "PM")
-		return num+50;
+		return num+49;
 	else if (prefix == "FRU")
 		return num;
 	else
