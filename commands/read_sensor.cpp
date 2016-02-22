@@ -69,30 +69,40 @@ namespace {
 				if (!sensor.size())
 					printf("%-16s ", it->name.c_str());
 
-				sysmgr::sensor_reading reading = sysmgr.sensor_read(crate, fru, it->name);
-				if (reading.threshold_set) {
-					if (!raw_values)
-						printf("%f %s", reading.threshold, it->shortunits.c_str());
-					else
-						printf("%f %s  0x%02hhx  0x%04hx", reading.threshold, it->shortunits.c_str(), reading.raw, reading.eventmask);
-
-					if (show_events) {
-						const int threshold_order[] = { 2, 1, 0, 3, 4, 5 };
-						const char *thresholds[] = { "lower non-critical", "lower critical", "lower non-recoverable", "upper noncritical", "upper critical", "upper nonrecoverable" };
-						//printf("Events:");
-						printf("\t");
-						int events = 0;
-						for (int i = 0; i < 6; i++) {
-							if (reading.eventmask & (1<<threshold_order[i]))
-								printf("%s %s", (events++ ? "," : ""), thresholds[threshold_order[i]]);
-						}
-						if (!events)
-							printf("no events");
-					}
-					printf("\n");
+				if (it->type == 'E') {
+					printf("Event Only\n");
+					continue;
 				}
-				else {
-					printf("0x%hhx 0x%04hx\n", reading.raw, reading.eventmask);
+
+				try {
+					sysmgr::sensor_reading reading = sysmgr.sensor_read(crate, fru, it->name);
+					if (reading.threshold_set) {
+						if (!raw_values)
+							printf("%f %s", reading.threshold, it->shortunits.c_str());
+						else
+							printf("%f %s  0x%02hhx  0x%04hx", reading.threshold, it->shortunits.c_str(), reading.raw, reading.eventmask);
+
+						if (show_events) {
+							const int threshold_order[] = { 2, 1, 0, 3, 4, 5 };
+							const char *thresholds[] = { "lower non-critical", "lower critical", "lower non-recoverable", "upper noncritical", "upper critical", "upper nonrecoverable" };
+							//printf("Events:");
+							printf("\t");
+							int events = 0;
+							for (int i = 0; i < 6; i++) {
+								if (reading.eventmask & (1<<threshold_order[i]))
+									printf("%s %s", (events++ ? "," : ""), thresholds[threshold_order[i]]);
+							}
+							if (!events)
+								printf("no events");
+						}
+						printf("\n");
+					}
+					else {
+						printf("0x%hhx 0x%04hx\n", reading.raw, reading.eventmask);
+					}
+				}
+				catch (sysmgr::sysmgr_exception &e) {
+					printf("sysmgr error: %s\n", e.message.c_str());
 				}
 			}
 			if (!sensor_found) {
