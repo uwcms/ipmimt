@@ -13,7 +13,8 @@ namespace {
 	REGISTER_COMMAND(Command_find_card);
 
 	const std::set<std::string> supported_card_types = {
-		"WISC CTP-7"
+		"WISC CTP-7",
+		"WISC CIOZ"
 	};
 
 	static uint32_t name_to_serial(std::string name, std::string &card_type)
@@ -33,7 +34,11 @@ namespace {
 		}
 		else if (name.substr(0, 7) == "kestrel") {
 			card_type = "WISC CIOZ";
-			return (1 << 24) | (parse_uint32(name.substr(7)) & 0x00ffffff);
+			uint32_t serial = parse_uint32(name.substr(7));
+			uint8_t rev = 1;
+			if (serial >= 4)
+				rev = 2;
+			return (rev << 24) | (serial & 0x00ffffff);
 		}
 		else {
 			throw std::range_error("unsupported card series");
@@ -53,11 +58,10 @@ namespace {
 			return stdsprintf("%s%u", series[revision-1], serial);
 		}
 		if (card_type == "WISC CIOZ") {
-			if (revision < 1 || revision > 1)
+			if (revision < 1 || revision > 2)
 				throw std::range_error("unsupported WISC CIOZ card revision");
 
-			const char *series[] = { "kestrel" };
-			return stdsprintf("%s%u", series[revision-1], serial);
+			return stdsprintf("kestrel%u", serial);
 		}
 		else {
 			throw std::range_error("unsupported card series");
