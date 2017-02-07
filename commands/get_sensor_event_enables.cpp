@@ -22,9 +22,9 @@ namespace {
 		opt::options_description option_normal("subcommand options");
 		option_normal.add_options()
 			("help", "command help")
-			("crate,c", opt::value<int>(&crate), "crate to identify or program")
-			("fru,f", opt::value<std::string>(&frustr), "fru to identify or program")
-			("sensor,s", opt::value<std::string>(&sensor), "fru to identify or program")
+			("crate,c", opt::value<int>(&crate), "crate")
+			("fru,f", opt::value<std::string>(&frustr), "fru")
+			("sensor,s", opt::value<std::string>(&sensor), "sensor")
 			("verbose,v", opt::bool_switch(&verbose), "show a human-readable breakdown of event enable masks");
 
 		opt::variables_map option_vars;
