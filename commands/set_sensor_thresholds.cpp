@@ -30,12 +30,12 @@ namespace {
 			("crate,c", opt::value<int>(&crate), "crate")
 			("fru,f", opt::value<std::string>(&frustr), "fru")
 			("sensor,s", opt::value<std::string>(&sensor), "sensor")
-			("unr", opt::value<std::string>(&unr_str), "upper non-recoverable (hex)")
-			("ucr", opt::value<std::string>(&ucr_str), "upper critical (hex)")
-			("unc", opt::value<std::string>(&unc_str), "upper non-critical (hex)")
-			("lnc", opt::value<std::string>(&lnc_str), "lower non-critical (hex)")
-			("lcr", opt::value<std::string>(&lcr_str), "lower critical (hex)")
-			("lnr", opt::value<std::string>(&lnr_str), "lower non-recoverable (hex)");
+			("unr", opt::value<std::string>(&unr_str), "upper non-recoverable (8-bit raw value)")
+			("ucr", opt::value<std::string>(&ucr_str), "upper critical (8-bit raw value)")
+			("unc", opt::value<std::string>(&unc_str), "upper non-critical (8-bit raw value)")
+			("lnc", opt::value<std::string>(&lnc_str), "lower non-critical (8-bit raw value)")
+			("lcr", opt::value<std::string>(&lcr_str), "lower critical (8-bit raw value)")
+			("lnr", opt::value<std::string>(&lnr_str), "lower non-recoverable (8-bit raw value)");
 
 		opt::variables_map option_vars;
 

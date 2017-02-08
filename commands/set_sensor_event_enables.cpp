@@ -29,8 +29,8 @@ namespace {
 			("crate,c", opt::value<int>(&crate), "crate")
 			("fru,f", opt::value<std::string>(&frustr), "fru")
 			("sensor,s", opt::value<std::string>(&sensor), "sensor")
-			("events-enabled", opt::value<int>(&events_enabled), "enable/disable sensor events")
-			("scanning-enabled", opt::value<int>(&scanning_enabled), "enable/disable sensor scanning")
+			("events-enabled", opt::value<int>(&events_enabled), "enable/disable sensor events (0 or 1)")
+			("scanning-enabled", opt::value<int>(&scanning_enabled), "enable/disable sensor scanning (0 or 1)")
 			("assert-mask,a", opt::value<std::string>(&assertion_mask_str), "sensor event assertion bitmask")
 			("deassert-mask,d", opt::value<std::string>(&deassertion_mask_str), "sensor event assertion bitmask");
 
