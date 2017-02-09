@@ -16,7 +16,7 @@ namespace {
 	{
 		int crate = 0;
 		std::string frustr;
-		std::string sensor;
+		int sensor = -1;
 		std::string unr_str;
 		std::string ucr_str;
 		std::string unc_str;
@@ -29,7 +29,7 @@ namespace {
 			("help", "command help")
 			("crate,c", opt::value<int>(&crate), "crate")
 			("fru,f", opt::value<std::string>(&frustr), "fru")
-			("sensor,s", opt::value<std::string>(&sensor), "sensor")
+			("sensor-number,n", opt::value<int>(&sensor), "sensor number (MMC, not MCH perspective)")
 			("unr", opt::value<std::string>(&unr_str), "upper non-recoverable (8-bit raw value)")
 			("ucr", opt::value<std::string>(&ucr_str), "upper critical (8-bit raw value)")
 			("unc", opt::value<std::string>(&unc_str), "upper non-critical (8-bit raw value)")
@@ -42,7 +42,7 @@ namespace {
 		opt::positional_options_description option_pos;
 		option_pos.add("crate", 1);
 		option_pos.add("fru", 1);
-		option_pos.add("sensor", 1);
+		option_pos.add("sensor-number", 1);
 
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
@@ -50,8 +50,9 @@ namespace {
 		if (option_vars.count("help")
 				|| option_vars["crate"].empty()
 				|| option_vars["fru"].empty()
-				|| option_vars["sensor"].empty() ) {
-			printf("ipmimt set_sensor_thresholds [arguments] [crate fru sensor_name]\n");
+				|| option_vars["sensor-number"].empty()
+				|| sensor < 0 || sensor > 0xfe) {
+			printf("ipmimt set_sensor_thresholds [arguments] [crate fru sensor_number]\n");
 			printf("\n");
 			std::cout << option_normal << "\n";
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
@@ -68,19 +69,26 @@ namespace {
 		}
 
 		try {
-			sysmgr::sensor_thresholds thresholds;
-#define SET_THRESH(thresh, structthresh) \
+			std::vector<uint8_t> req = { 0x04, 0x26, static_cast<uint8_t>(sensor), 0, 0, 0, 0, 0, 0, 0 };
+
+#define SET_THRESH(thresh, bit) \
 			if (!option_vars[ #thresh ].empty()) { \
-				thresholds.structthresh = parse_uint8(thresh ## _str); \
-				thresholds.structthresh ## _set = true; \
+				req[3] |= (1<<bit); \
+				req[bit+4] = parse_uint8(thresh ## _str); \
 			}
-			SET_THRESH(unr, unr);
-			SET_THRESH(ucr, uc);
-			SET_THRESH(unc, unc);
-			SET_THRESH(lnc, lnc);
-			SET_THRESH(lcr, lc);
-			SET_THRESH(lnr, lnr);
-		   	sysmgr.set_sensor_thresholds(crate, fru, sensor, thresholds);
+			SET_THRESH(unr, 5);
+			SET_THRESH(ucr, 4);
+			SET_THRESH(unc, 3);
+			SET_THRESH(lnc, 0);
+			SET_THRESH(lcr, 1);
+			SET_THRESH(lnr, 2);
+			//for (auto it = req.begin(), eit = req.end(); it != eit; ++it)
+			//	printf("0x%02x ", *it); printf("\n");
+			std::vector<uint8_t> rsp = sysmgr.raw_card(crate, fru, req);
+			if (rsp[0]) {
+				printf("Set Sensor Thresholds command returned response code 0x%02hhx\n", rsp[0]);
+				return EXIT_REMOTE_ERROR;
+			}
 		}
 		catch (sysmgr::sysmgr_exception &e) {
 			printf("sysmgr error: %s\n", e.message.c_str());

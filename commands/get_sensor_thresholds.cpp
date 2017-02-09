@@ -16,21 +16,21 @@ namespace {
 	{
 		int crate = 0;
 		std::string frustr;
-		std::string sensor;
+		int sensor = -1;
 
 		opt::options_description option_normal("subcommand options");
 		option_normal.add_options()
 			("help", "command help")
 			("crate,c", opt::value<int>(&crate), "crate")
 			("fru,f", opt::value<std::string>(&frustr), "fru")
-			("sensor,s", opt::value<std::string>(&sensor), "sensor");
+			("sensor-number,n", opt::value<int>(&sensor), "sensor number (MMC, not MCH perspective)");
 
 		opt::variables_map option_vars;
 
 		opt::positional_options_description option_pos;
 		option_pos.add("crate", 1);
 		option_pos.add("fru", 1);
-		option_pos.add("sensor", 1);
+		option_pos.add("sensor-number", 1);
 
 		if (parse_config(args, option_normal, option_pos, option_vars) < 0)
 			return EXIT_PARAM_ERROR;
@@ -38,8 +38,9 @@ namespace {
 		if (option_vars.count("help")
 				|| option_vars["crate"].empty()
 				|| option_vars["fru"].empty()
-				|| option_vars["sensor"].empty() ) {
-			printf("ipmimt get_sensor_thresholds [arguments] [crate fru sensor_name]\n");
+				|| option_vars["sensor-number"].empty()
+				|| sensor < 0 || sensor > 0xfe) {
+			printf("ipmimt get_sensor_thresholds [arguments] [crate fru sensor_number]\n");
 			printf("\n");
 			std::cout << option_normal << "\n";
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
@@ -56,36 +57,46 @@ namespace {
 		}
 
 		try {
-			sysmgr::sensor_thresholds thresholds = sysmgr.get_sensor_thresholds(crate, fru, sensor);
+			std::vector<uint8_t> req;
+			req.push_back(0x04);
+			req.push_back(0x27);
+			req.push_back(sensor);
+			std::vector<uint8_t> rsp = sysmgr.raw_card(crate, fru, req);
+			if (rsp[0]) {
+				printf("Get Sensor Thresholds command returned response code 0x%02hhx\n", rsp[0]);
+				return EXIT_REMOTE_ERROR;
+			}
+			//for (auto it = rsp.begin(), eit = rsp.end(); it != eit; ++it)
+			//	printf("0x%02x ", *it); printf("\n");
 
-			if (thresholds.unr_set)
-				printf("Upper Non-Recoverable:  0x%02x\n", thresholds.unr);
+			if (rsp[1] & (1<<5))
+				printf("Upper Non-Recoverable:  0x%02x\n", rsp[7]);
 			else
 				printf("Upper Non-Recoverable:  Unavailable\n");
 
-			if (thresholds.uc_set)
-				printf("Upper Critical:         0x%02x\n", thresholds.uc);
+			if (rsp[1] & (1<<4))
+				printf("Upper Critical:         0x%02x\n", rsp[6]);
 			else
 				printf("Upper Critical:         Unavailable\n");
 
-			if (thresholds.unc_set)
-				printf("Upper Non-Critical:     0x%02x\n", thresholds.unc);
+			if (rsp[1] & (1<<3))
+				printf("Upper Non-Critical:     0x%02x\n", rsp[5]);
 			else
 				printf("Upper Non-Critical:     Unavailable\n");
 
 
-			if (thresholds.lnc_set)
-				printf("Lower Non-Critical:     0x%02x\n", thresholds.lnc);
+			if (rsp[1] & (1<<0))
+				printf("Lower Non-Critical:     0x%02x\n", rsp[2]);
 			else
 				printf("Lower Non-Critical:     Unavailable\n");
 
-			if (thresholds.lc_set)
-				printf("Lower Critical:         0x%02x\n", thresholds.lc);
+			if (rsp[1] & (1<<1))
+				printf("Lower Critical:         0x%02x\n", rsp[3]);
 			else
 				printf("Lower Critical:         Unavailable\n");
 
-			if (thresholds.lnr_set)
-				printf("Lower Non-Recoverable:  0x%02x\n", thresholds.lnr);
+			if (rsp[1] & (1<<2))
+				printf("Lower Non-Recoverable:  0x%02x\n", rsp[4]);
 			else
 				printf("Lower Non-Recoverable:  Unavailable\n");
 		}
