@@ -88,12 +88,6 @@ namespace {
 		}
 
 		try {
-			sysmgr::sensor_event_enables event_enables;
-			event_enables.events_enabled = events_enabled;
-			event_enables.scanning_enabled = scanning_enabled;
-			event_enables.assertion_bitmask = assertion_mask;
-			event_enables.deassertion_bitmask = deassertion_mask;
-		   
 			std::vector<uint8_t> req = { 0x04, 0x28, static_cast<uint8_t>(sensor), 0, 0, 0, 0, 0 };
 			if (events_enabled)
 				req[3] |= 0x80;
@@ -107,8 +101,8 @@ namespace {
 			req[7] = (deassertion_mask >> 8) & 0xff;
 
 			req[3] |= 0x10; // "set selected"
-			for (auto it = req.begin(), eit = req.end(); it != eit; ++it)
-				printf("0x%02x ", *it); printf("\n");
+			//for (auto it = req.begin(), eit = req.end(); it != eit; ++it)
+			//	printf("0x%02x ", *it); printf("\n");
 			std::vector<uint8_t> rsp = sysmgr.raw_card(crate, fru, req);
 			if (rsp[0]) {
 				printf("Set Sensor Thresholds command returned response code 0x%02hhx\n", rsp[0]);

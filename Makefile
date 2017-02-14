@@ -5,7 +5,7 @@ CCOPTS = $(DEPOPTS) -ggdb -Wall -std=c++0x
 all: ipmimt tags
 
 ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp libs/*.cpp)) .obj/versioninfo.o
-	g++ $(CCOPTS) -o $@ $^ -lsysmgr -lboost_program_options
+	g++ $(CCOPTS) -o $@ $^ -lsysmgr -ljsoncpp -lz -lboost_program_options
 
 .PHONY: .obj/versioninfo.o
 .obj/versioninfo.o:
