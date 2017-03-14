@@ -1,3 +1,7 @@
-/ipmimt
-/rpm/
+.obj/
+.dep/
+.*.dep
+.*.swp
+ipmimt
+/rpm
 /*.rpm
