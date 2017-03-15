@@ -11,7 +11,7 @@ Group: Applications/XDAQ
 #Source: http://github.com/uwcms/sysmgr-tools/archive/%{commit}/sysmgr-tools-%{commit}.tar.gz
 URL: https://github.com/uwcms/sysmgr-tools
 BuildRoot: %{PWD}/rpm/buildroot
-Requires: sysmgr >= 1.1.0, boost-program-options >= 1.41.0
+Requires: sysmgr >= 1.1.3, boost-program-options >= 1.41.0
 #Prefix: /usr
 
 %description
