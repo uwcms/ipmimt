@@ -2,7 +2,7 @@ DEPOPTS = -MMD -MF .dep/$(subst /,^,$(subst .obj/,,$@)) -MP
 
 CCOPTS = $(DEPOPTS) -ggdb -Wall -std=c++0x
 
-all: ipmimt tags
+all: ipmimt
 
 ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp libs/*.cpp)) .obj/versioninfo.o
 	g++ $(CCOPTS) -o $@ $^ -lsysmgr -ljsoncpp -lz -lboost_program_options
@@ -17,18 +17,26 @@ ipmimt: $(patsubst %.cpp,.obj/%.o,$(wildcard *.cpp commands/*.cpp libs/*.cpp)) .
 	g++ $(CCOPTS) $(DEPOPTS) -c -o $@ $<
 
 rpm: all
-	IPMIMT_ROOT=$(PWD) rpmbuild --sign -ba --quiet --define "_topdir $(PWD)/rpm" ipmimt.spec
+	IPMIMT_ROOT=$(PWD) rpmbuild -ba --quiet --define "_topdir $(PWD)/rpm" ipmimt.spec
 	cp -v $(PWD)/rpm/RPMS/*/*.rpm ./
 	rm -rf $(PWD)/rpm/
+	@echo
+	@echo '*** Don'\''t forget to run `make rpmsign`!'
 
-tags: $(wildcard *.cpp *.h commands/*.cpp commands/*.h)
-	ctags -R . 2>/dev/null || true
+ifneq ("$(wildcard *.rpm)","")
+rpmsign:
+else
+rpmsign: rpm
+endif
+	rpmsign --macros='/usr/lib/rpm/macros:/usr/lib/rpm/redhat/macros:/etc/rpm/macros:$(HOME)/.rpmmacros' --addsign *.rpm
 
-distclean: clean
-	rm -rf .dep tags *.rpm
+distclean: clean rpmclean
+	rm -rf .dep
 clean:
 	rm -rf ipmimt .obj/ rpm/
+rpmclean:
+	rm -rf *.rpm rpm/
 
-.PHONY: distclean clean all rpm
+.PHONY: distclean clean rpmclean all rpm rpmsign
 
 -include $(wildcard .dep/*)

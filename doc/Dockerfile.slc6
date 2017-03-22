@@ -1,0 +1,32 @@
+FROM cern/slc6-base
+MAINTAINER Jesra Tikalsky <jtikalsky@hep.wisc.edu>
+
+RUN \
+	curl -s https://www.hep.wisc.edu/uwcms-repos/el6/release/uwcms.repo -o /etc/yum.repos.d/uwcms.repo && \
+	curl -s https://www.hep.wisc.edu/uwcms-repos/el6/unstable/uwcms-unstable.repo -o /etc/yum.repos.d/uwcms-unstable.repo && \
+	curl -s https://www.hep.wisc.edu/uwcms-repos/5B766A47.asc -o /5B766A47.asc && \
+	rpm --import /5B766A47.asc && \
+	rm /5B766A47.asc && \
+	yum update -y && \
+	yum groupinstall -y 'Development Tools' && \
+	yum install -y sudo vim createrepo && \
+	yum clean all
+
+RUN echo 'ALL ALL = (ALL) NOPASSWD: ALL' > /etc/sudoers && \
+	for I in $(seq 1000 10000); do echo "u${I}:x:${I}:${I}::/root:/bin/bash" >> /etc/passwd; done && \
+	for I in $(seq 1000 10000); do echo "g${I}:x:${I}:" >> /etc/group; done
+
+RUN \
+	yum update -y && \
+	yum install -y sysmgr-client-devel boost-devel jsoncpp-devel zlib-devel && \
+	yum clean all
+
+#RUN echo -e '[ipmimt-local]\nname=Local IPMIMT Repository\nbaseurl=file:///ipmimt\ngpgcheck=0\nenabled=1\nskip_if_unavailable=1' > /etc/yum.repos.d/ipmimt-local.repo
+
+#WORKDIR /
+#RUN git clone https://github.com/uwcms/ipmimt
+ADD . /ipmimt
+WORKDIR /ipmimt
+
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["/bin/bash"]
