@@ -210,10 +210,11 @@ namespace {
 				|| !valid_mode) {
 			printf("ipmimt find_card [arguments] [hostname]\n");
 			printf("\n");
-			printf("With crate & fru:  Look up the card's identity (hostname)\n");
-			printf("With hostname:     Search for a matching card\n");
-			printf("With --program:    Write the card's identity to EEPROM\n");
-			printf("With list:         List all supported cards [in the specified crate]\n");
+			printf("With --crate & --fru:  Look up the card's identity (hostname)\n");
+			printf("With --hostname:       Search for a matching card\n");
+			printf("With --program:        Write the card's identity to EEPROM\n");
+			printf("With --list:           List all supported cards\n");
+			printf("With --crate & --list: List all supported cards in one crate\n");
 			printf("\n");
 			std::cout << option_normal << "\n";
 			return (option_vars.count("help") ? EXIT_OK : EXIT_PARAM_ERROR);
